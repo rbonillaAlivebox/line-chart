@@ -107,7 +107,7 @@
         options.forEach (s, i) ->
           s.axis = if s.axis?.toLowerCase() isnt 'y2' then 'y' else 'y2'
           s.color or= colors(i)
-          s.type = if s.type in ['line', 'area', 'column'] then s.type else "line"
+          s.type = if s.type in ['line', 'area', 'column', 'candlestick'] then s.type else "line"
 
           if s.type is 'column'
             delete s.thickness

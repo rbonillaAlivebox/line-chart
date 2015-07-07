@@ -1,6 +1,6 @@
 
 /*
-line-chart - v1.1.10 - 03 July 2015
+line-chart - v1.1.10 - 07 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
  */
@@ -63,7 +63,7 @@ directive('linechart', [
         _u.createContent(svg, id, options, handlers);
         if (dataPerSeries.length) {
           columnWidth = _u.getBestColumnWidth(axes, dimensions, dataPerSeries, options);
-          _u.drawArea(svg, axes, dataPerSeries, options, handlers).drawColumns(svg, axes, dataPerSeries, columnWidth, options, handlers, dispatch).drawLines(svg, axes, dataPerSeries, options, handlers);
+          _u.drawArea(svg, axes, dataPerSeries, options, handlers).drawColumns(svg, axes, dataPerSeries, columnWidth, options, handlers, dispatch).drawLines(svg, axes, dataPerSeries, options, handlers).drawCandlestick(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions);
           if (options.drawDots) {
             _u.drawDots(svg, axes, dataPerSeries, options, handlers, dispatch);
           }
@@ -213,6 +213,91 @@ mod.factory('n3utils', [
         }).y1(function(d) {
           return scales.y2Scale(d.y0 + d.y);
         }).interpolate(mode).tension(tension);
+      },
+      drawCandlestick: function(svg, axes, data, columnWidth, options, handlers, dimensions) {
+        var colGroup, gainColor, height, lossColor, margin, that, width;
+        margin = 50;
+        that = this;
+        height = dimensions.height;
+        width = dimensions.width;
+        data = data.filter(function(s) {
+          return s.type === 'candlestick';
+        });
+        if (data.length === 0) {
+          return this;
+        }
+        gainColor = 'green';
+        lossColor = 'red';
+        if (options.series[0].gainColor) {
+          gainColor = options.series[0].gainColor;
+        }
+        if (options.series[0].lossColor) {
+          lossColor = options.series[0].lossColor;
+        }
+        colGroup = svg.select('.content').selectAll('.candleGroup').data(data).enter().append('g').attr('class', function(s) {
+          return 'candleGroup series_' + s.index;
+        });
+        colGroup.selectAll('rect').data(function(d) {
+          return d.values;
+        }).enter().append('svg:rect').attr({
+          x: function(d) {
+            var tmpX;
+            tmpX = axes.xScale(d.x);
+            return tmpX - 15;
+          },
+          y: function(d) {
+            var tmpHeight, tmpY;
+            tmpY = axes[d.axis + 'Scale'](d.open);
+            tmpHeight = axes[d.axis + 'Scale'](d.close) - axes[d.axis + 'Scale'](d.open);
+            if (tmpHeight < 0) {
+              tmpHeight = axes[d.axis + 'Scale'](d.open) - axes[d.axis + 'Scale'](d.close);
+              tmpY = tmpY - tmpHeight;
+            }
+            return tmpY;
+          },
+          width: function(d) {
+            return 30;
+          },
+          height: function(d) {
+            var tmpHeight;
+            tmpHeight = axes[d.axis + 'Scale'](d.close) - axes[d.axis + 'Scale'](d.open);
+            if (tmpHeight < 0) {
+              tmpHeight = axes[d.axis + 'Scale'](d.open) - axes[d.axis + 'Scale'](d.close);
+            }
+            return tmpHeight;
+          },
+          fill: function(d) {
+            if (d.open > d.close) {
+              return lossColor;
+            }
+            return gainColor;
+          }
+        });
+        colGroup.selectAll('line.stem').data(function(d) {
+          return d.values;
+        }).enter().append('svg:line').attr('class', function(d) {
+          return 'stem';
+        }).attr({
+          x1: function(d) {
+            return axes.xScale(d.x);
+          },
+          x2: function(d) {
+            return axes.xScale(d.x);
+          },
+          y1: function(d) {
+            return axes[d.axis + 'Scale'](d.high);
+          },
+          y2: function(d) {
+            return axes[d.axis + 'Scale'](d.low);
+          },
+          stroke: function(d) {
+            if (d.open > d.close) {
+              return lossColor;
+            }
+            return gainColor;
+          }
+        });
+        return this;
       },
       getPseudoColumns: function(data, options) {
         var keys, pseudoColumns;
@@ -861,12 +946,26 @@ mod.factory('n3utils', [
             return row[s.y] != null;
           }).forEach(function(row) {
             var d;
-            d = {
-              x: row[options.axes.x.key],
-              y: row[s.y],
-              y0: 0,
-              axis: s.axis || 'y'
-            };
+            if (s.type === 'candlestick') {
+              d = {
+                x: row[options.axes.x.key],
+                y: row[s.y],
+                y0: 0,
+                axis: s.axis || 'y',
+                date: row.dateValue,
+                close: row.closeValue,
+                open: row.openValue,
+                high: row.highValue,
+                low: row.lowValue
+              };
+            } else {
+              d = {
+                x: row[options.axes.x.key],
+                y: row[s.y],
+                y0: 0,
+                axis: s.axis || 'y'
+              };
+            }
             if (s.dotSize != null) {
               d.dotSize = s.dotSize;
             }
@@ -1086,7 +1185,7 @@ mod.factory('n3utils', [
           var cnt, _ref, _ref1, _ref2, _ref3;
           s.axis = ((_ref = s.axis) != null ? _ref.toLowerCase() : void 0) !== 'y2' ? 'y' : 'y2';
           s.color || (s.color = colors(i));
-          s.type = (_ref1 = s.type) === 'line' || _ref1 === 'area' || _ref1 === 'column' ? s.type : "line";
+          s.type = (_ref1 = s.type) === 'line' || _ref1 === 'area' || _ref1 === 'column' || _ref1 === 'candlestick' ? s.type : "line";
           if (s.type === 'column') {
             delete s.thickness;
             delete s.lineMode;

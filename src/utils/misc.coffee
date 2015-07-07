@@ -195,11 +195,23 @@
             seriesData.id = s.id
 
           data.filter((row) -> row[s.y]?).forEach (row) ->
-            d =
-              x: row[options.axes.x.key]
-              y: row[s.y]
-              y0: 0
-              axis: s.axis || 'y'
+            if s.type == 'candlestick'
+              d =
+                x: row[options.axes.x.key]
+                y: row[s.y]
+                y0: 0
+                axis: s.axis || 'y'
+                date: row.dateValue
+                close: row.closeValue
+                open: row.openValue
+                high: row.highValue
+                low: row.lowValue
+            else
+              d =
+                x: row[options.axes.x.key]
+                y: row[s.y]
+                y0: 0
+                axis: s.axis || 'y'
 
             d.dotSize = s.dotSize if s.dotSize?
             seriesData.values.push(d)

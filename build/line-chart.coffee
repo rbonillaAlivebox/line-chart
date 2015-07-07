@@ -1,5 +1,5 @@
 ###
-line-chart - v1.1.10 - 03 July 2015
+line-chart - v1.1.10 - 07 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
 ###
@@ -65,6 +65,7 @@ directive('linechart', ['n3utils', '$window', '$timeout', (n3utils, $window, $ti
           .drawArea(svg, axes, dataPerSeries, options, handlers)
           .drawColumns(svg, axes, dataPerSeries, columnWidth, options, handlers, dispatch)
           .drawLines(svg, axes, dataPerSeries, options, handlers)
+          .drawCandlestick(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions)
 
         if options.drawDots
           _u.drawDots(svg, axes, dataPerSeries, options, handlers, dispatch)
@@ -140,7 +141,7 @@ directive('linechart', ['n3utils', '$window', '$timeout', (n3utils, $window, $ti
 
 # ----
 
-# /tmp/utils.coffee
+# D:/tmp/utils.coffee
 mod = angular.module('n3charts.utils', [])
 
 mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootScope) ->
@@ -220,6 +221,75 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           .interpolate(mode)
           .tension(tension)
 
+# ----
+
+
+# src/utils/candlestick.coffee
+      drawCandlestick: (svg, axes, data, columnWidth, options, handlers, dimensions) ->
+        margin = 50
+        that = this
+        height = dimensions.height
+        width = dimensions.width
+
+        data = data.filter (s) -> s.type is 'candlestick'
+
+        if data.length == 0
+          return this
+
+        gainColor = 'green'
+        lossColor = 'red'
+
+        gainColor = options.series[0].gainColor if options.series[0].gainColor
+
+
+        lossColor = options.series[0].lossColor if options.series[0].lossColor
+
+        colGroup = svg.select('.content').selectAll('.candleGroup')
+          .data(data)
+          .enter().append('g')
+          .attr('class', (s) -> 'candleGroup series_' + s.index)
+
+        colGroup.selectAll('rect').data((d) -> d.values)
+          .enter().append('svg:rect')
+          .attr(
+            x: (d) ->
+              tmpX = axes.xScale(d.x)
+              return tmpX - 15
+            y: (d) ->
+              tmpY = axes[d.axis + 'Scale'](d.open)
+              tmpHeight = axes[d.axis + 'Scale'](d.close) - axes[d.axis + 'Scale'](d.open)
+              if tmpHeight < 0
+                tmpHeight = axes[d.axis + 'Scale'](d.open) - axes[d.axis + 'Scale'](d.close)
+                tmpY = tmpY - tmpHeight
+              return tmpY
+            width: (d) ->
+              return 30
+            height: (d) ->
+              tmpHeight = axes[d.axis + 'Scale'](d.close) - axes[d.axis + 'Scale'](d.open)
+              if tmpHeight < 0
+                tmpHeight = axes[d.axis + 'Scale'](d.open) - axes[d.axis + 'Scale'](d.close)
+              return tmpHeight
+            fill: (d) ->
+              if d.open > d.close
+                return lossColor
+              return gainColor
+          )
+
+        colGroup.selectAll('line.stem').data((d) -> d.values)
+          .enter().append('svg:line')
+          .attr('class', (d) -> 'stem')
+          .attr(
+            x1: (d) -> axes.xScale(d.x)
+            x2: (d) -> axes.xScale(d.x)
+            y1: (d) -> axes[d.axis + 'Scale'](d.high)
+            y2: (d) -> axes[d.axis + 'Scale'](d.low)
+            stroke: (d) ->
+              if d.open > d.close
+                return lossColor
+              return gainColor
+          )
+
+        return this
 # ----
 
 
@@ -878,11 +948,23 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
             seriesData.id = s.id
 
           data.filter((row) -> row[s.y]?).forEach (row) ->
-            d =
-              x: row[options.axes.x.key]
-              y: row[s.y]
-              y0: 0
-              axis: s.axis || 'y'
+            if s.type == 'candlestick'
+              d =
+                x: row[options.axes.x.key]
+                y: row[s.y]
+                y0: 0
+                axis: s.axis || 'y'
+                date: row.dateValue
+                close: row.closeValue
+                open: row.openValue
+                high: row.highValue
+                low: row.lowValue
+            else
+              d =
+                x: row[options.axes.x.key]
+                y: row[s.y]
+                y0: 0
+                axis: s.axis || 'y'
 
             d.dotSize = s.dotSize if s.dotSize?
             seriesData.values.push(d)
@@ -1065,7 +1147,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         options.forEach (s, i) ->
           s.axis = if s.axis?.toLowerCase() isnt 'y2' then 'y' else 'y2'
           s.color or= colors(i)
-          s.type = if s.type in ['line', 'area', 'column'] then s.type else "line"
+          s.type = if s.type in ['line', 'area', 'column', 'candlestick'] then s.type else "line"
 
           if s.type is 'column'
             delete s.thickness
