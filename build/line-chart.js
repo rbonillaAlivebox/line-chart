@@ -1,6 +1,6 @@
 
 /*
-line-chart - v1.1.10 - 07 July 2015
+line-chart - v1.1.10 - 08 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
  */
@@ -63,7 +63,7 @@ directive('linechart', [
         _u.createContent(svg, id, options, handlers);
         if (dataPerSeries.length) {
           columnWidth = _u.getBestColumnWidth(axes, dimensions, dataPerSeries, options);
-          _u.drawArea(svg, axes, dataPerSeries, options, handlers).drawColumns(svg, axes, dataPerSeries, columnWidth, options, handlers, dispatch).drawLines(svg, axes, dataPerSeries, options, handlers).drawCandlestick(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions);
+          _u.drawArea(svg, axes, dataPerSeries, options, handlers).drawColumns(svg, axes, dataPerSeries, columnWidth, options, handlers, dispatch).drawLines(svg, axes, dataPerSeries, options, handlers).drawCandlestick(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions).drawOhlc(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions);
           if (options.drawDots) {
             _u.drawDots(svg, axes, dataPerSeries, options, handlers, dispatch);
           }
@@ -215,8 +215,7 @@ mod.factory('n3utils', [
         }).interpolate(mode).tension(tension);
       },
       drawCandlestick: function(svg, axes, data, columnWidth, options, handlers, dimensions) {
-        var colGroup, gainColor, height, lossColor, margin, that, width;
-        margin = 50;
+        var colGroup, gainColor, height, lossColor, that, width;
         that = this;
         height = dimensions.height;
         width = dimensions.width;
@@ -946,7 +945,7 @@ mod.factory('n3utils', [
             return row[s.y] != null;
           }).forEach(function(row) {
             var d;
-            if (s.type === 'candlestick') {
+            if (s.type === 'candlestick' || s.type === 'ohlc') {
               d = {
                 x: row[options.axes.x.key],
                 y: row[s.y],
@@ -1049,6 +1048,104 @@ mod.factory('n3utils', [
           });
         });
         return widest;
+      },
+      drawOhlc: function(svg, axes, data, columnWidth, options, handlers, dimensions) {
+        var colGroup, gainColor, height, lossColor, that, width;
+        that = this;
+        height = dimensions.height;
+        width = dimensions.width;
+        data = data.filter(function(s) {
+          return s.type === 'ohlc';
+        });
+        if (data.length === 0) {
+          return this;
+        }
+        if (options.series[0].gainColor) {
+          gainColor = options.series[0].gainColor;
+        }
+        if (options.series[0].lossColor) {
+          lossColor = options.series[0].lossColor;
+        }
+        colGroup = svg.select('.content').selectAll('.ohlcGroup').data(data).enter().append('g').attr('class', function(s) {
+          return 'ohlcGroup series_' + s.index;
+        });
+        colGroup.selectAll('open').data(function(d) {
+          return d.values;
+        }).enter().append('svg:line').attr({
+          x1: function(d) {
+            var tmpX;
+            tmpX = axes.xScale(d.x);
+            return tmpX - 20;
+          },
+          y1: function(d) {
+            return axes[d.axis + 'Scale'](d.open);
+          },
+          x2: function(d) {
+            var tmpX;
+            tmpX = axes.xScale(d.x);
+            return tmpX;
+          },
+          y2: function(d) {
+            return axes[d.axis + 'Scale'](d.open);
+          },
+          stroke: function(d) {
+            if (d.open > d.close) {
+              return lossColor;
+            }
+            return gainColor;
+          }
+        });
+        colGroup.selectAll('close').data(function(d) {
+          return d.values;
+        }).enter().append('svg:line').attr({
+          x1: function(d) {
+            var tmpX;
+            tmpX = axes.xScale(d.x);
+            return tmpX;
+          },
+          y1: function(d) {
+            return axes[d.axis + 'Scale'](d.close);
+          },
+          x2: function(d) {
+            var tmpX;
+            tmpX = axes.xScale(d.x);
+            return tmpX + 20;
+          },
+          y2: function(d) {
+            return axes[d.axis + 'Scale'](d.close);
+          },
+          stroke: function(d) {
+            if (d.open > d.close) {
+              return lossColor;
+            }
+            return gainColor;
+          }
+        });
+        colGroup.selectAll('line.stem').data(function(d) {
+          return d.values;
+        }).enter().append('svg:line').attr('class', function(d) {
+          return 'stem';
+        }).attr({
+          x1: function(d) {
+            return axes.xScale(d.x);
+          },
+          x2: function(d) {
+            return axes.xScale(d.x);
+          },
+          y1: function(d) {
+            return axes[d.axis + 'Scale'](d.high);
+          },
+          y2: function(d) {
+            return axes[d.axis + 'Scale'](d.low);
+          },
+          stroke: function(d) {
+            if (d.open > d.close) {
+              return lossColor;
+            }
+            return gainColor;
+          }
+        });
+        return this;
       },
       getDefaultOptions: function() {
         return {
@@ -1185,7 +1282,7 @@ mod.factory('n3utils', [
           var cnt, _ref, _ref1, _ref2, _ref3;
           s.axis = ((_ref = s.axis) != null ? _ref.toLowerCase() : void 0) !== 'y2' ? 'y' : 'y2';
           s.color || (s.color = colors(i));
-          s.type = (_ref1 = s.type) === 'line' || _ref1 === 'area' || _ref1 === 'column' || _ref1 === 'candlestick' ? s.type : "line";
+          s.type = (_ref1 = s.type) === 'line' || _ref1 === 'area' || _ref1 === 'column' || _ref1 === 'candlestick' || _ref1 === 'ohlc' ? s.type : "line";
           if (s.type === 'column') {
             delete s.thickness;
             delete s.lineMode;

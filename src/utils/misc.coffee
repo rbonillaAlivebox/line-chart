@@ -61,7 +61,7 @@
 
         defs = svg.append('defs')
           .attr('class', 'patterns')
-        
+
         # Add a clipPath for the content area
         defs.append('clipPath')
           .attr('class', 'content-clip')
@@ -79,7 +79,7 @@
       createContent: (svg, id, options) ->
         content = svg.append('g')
           .attr('class', 'content')
-        
+
         if options.hideOverflow
           content.attr('clip-path', "url(#content-clip-#{id})")
 
@@ -195,7 +195,7 @@
             seriesData.id = s.id
 
           data.filter((row) -> row[s.y]?).forEach (row) ->
-            if s.type == 'candlestick'
+            if s.type == 'candlestick' or s.type == 'ohlc'
               d =
                 x: row[options.axes.x.key]
                 y: row[s.y]
@@ -243,16 +243,16 @@
 
       getTextBBox: (svgTextElement) ->
         if svgTextElement isnt null
-        
+
           try
             return svgTextElement.getBBox()
-        
+
           catch error
             # NS_ERROR_FAILURE in FF for calling .getBBox()
             # on an element that is not rendered (e.g. display: none)
             # https://bugzilla.mozilla.org/show_bug.cgi?id=612118
             return {height: 0, width: 0, y: 0, x: 0}
-        
+
         return {}
 
       getWidestTickWidth: (svg, axisKey) ->
@@ -270,7 +270,7 @@
         data.forEach (row) ->
           series.forEach (series) ->
             v = row[series.y]
-            
+
             if series.axis? and options.axes[series.axis]?.ticksFormatter
               v = options.axes[series.axis].ticksFormatter(v)
 

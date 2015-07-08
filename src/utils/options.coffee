@@ -30,11 +30,11 @@
         options.axes = this.sanitizeAxes(options.axes, this.haveSecondYAxis(options.series))
         options.tooltip = this.sanitizeTooltip(options.tooltip)
         options.margin = this.sanitizeMargins(options.margin)
-        
+
         options.lineMode or= this.getDefaultOptions().lineMode
         options.tension = if /^\d+(\.\d+)?$/.test(options.tension) then options.tension \
           else this.getDefaultOptions().tension
-        
+
         options.drawLegend = options.drawLegend isnt false
         options.drawDots = options.drawDots isnt false
         options.columnsHGap = 5 unless angular.isNumber(options.columnsHGap)
@@ -107,7 +107,7 @@
         options.forEach (s, i) ->
           s.axis = if s.axis?.toLowerCase() isnt 'y2' then 'y' else 'y2'
           s.color or= colors(i)
-          s.type = if s.type in ['line', 'area', 'column', 'candlestick'] then s.type else "line"
+          s.type = if s.type in ['line', 'area', 'column', 'candlestick', 'ohlc'] then s.type else "line"
 
           if s.type is 'column'
             delete s.thickness
@@ -190,7 +190,7 @@
           if options.type is 'date'
             # Use d3.time.format as formatter
             options.ticksFormatter = d3.time.format(options.ticksFormat)
-            
+
           else
             # Use d3.format as formatter
             options.ticksFormatter = d3.format(options.ticksFormat)
@@ -205,11 +205,11 @@
           if options.type is 'date'
             # Use d3.time.format as formatter
             options.tooltipFormatter = d3.time.format(options.tooltipFormat)
-            
+
           else
             # Use d3.format as formatter
             options.tooltipFormatter = d3.format(options.tooltipFormat)
-        
+
         if options.ticksInterval?
           options.ticksInterval = this.getSanitizedNumber(options.ticksInterval)
 

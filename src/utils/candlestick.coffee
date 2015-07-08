@@ -1,5 +1,4 @@
       drawCandlestick: (svg, axes, data, columnWidth, options, handlers, dimensions) ->
-        margin = 50
         that = this
         height = dimensions.height
         width = dimensions.width
@@ -13,8 +12,6 @@
         lossColor = 'red'
 
         gainColor = options.series[0].gainColor if options.series[0].gainColor
-
-
         lossColor = options.series[0].lossColor if options.series[0].lossColor
 
         colGroup = svg.select('.content').selectAll('.candleGroup')

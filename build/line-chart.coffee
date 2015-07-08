@@ -1,5 +1,5 @@
 ###
-line-chart - v1.1.10 - 07 July 2015
+line-chart - v1.1.10 - 08 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
 ###
@@ -66,6 +66,7 @@ directive('linechart', ['n3utils', '$window', '$timeout', (n3utils, $window, $ti
           .drawColumns(svg, axes, dataPerSeries, columnWidth, options, handlers, dispatch)
           .drawLines(svg, axes, dataPerSeries, options, handlers)
           .drawCandlestick(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions)
+          .drawOhlc(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions)
 
         if options.drawDots
           _u.drawDots(svg, axes, dataPerSeries, options, handlers, dispatch)
@@ -226,7 +227,6 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
 
 # src/utils/candlestick.coffee
       drawCandlestick: (svg, axes, data, columnWidth, options, handlers, dimensions) ->
-        margin = 50
         that = this
         height = dimensions.height
         width = dimensions.width
@@ -240,8 +240,6 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         lossColor = 'red'
 
         gainColor = options.series[0].gainColor if options.series[0].gainColor
-
-
         lossColor = options.series[0].lossColor if options.series[0].lossColor
 
         colGroup = svg.select('.content').selectAll('.candleGroup')
@@ -290,6 +288,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           )
 
         return this
+
 # ----
 
 
@@ -814,7 +813,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
 
         defs = svg.append('defs')
           .attr('class', 'patterns')
-        
+
         # Add a clipPath for the content area
         defs.append('clipPath')
           .attr('class', 'content-clip')
@@ -832,7 +831,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
       createContent: (svg, id, options) ->
         content = svg.append('g')
           .attr('class', 'content')
-        
+
         if options.hideOverflow
           content.attr('clip-path', "url(#content-clip-#{id})")
 
@@ -948,7 +947,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
             seriesData.id = s.id
 
           data.filter((row) -> row[s.y]?).forEach (row) ->
-            if s.type == 'candlestick'
+            if s.type == 'candlestick' or s.type == 'ohlc'
               d =
                 x: row[options.axes.x.key]
                 y: row[s.y]
@@ -996,16 +995,16 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
 
       getTextBBox: (svgTextElement) ->
         if svgTextElement isnt null
-        
+
           try
             return svgTextElement.getBBox()
-        
+
           catch error
             # NS_ERROR_FAILURE in FF for calling .getBBox()
             # on an element that is not rendered (e.g. display: none)
             # https://bugzilla.mozilla.org/show_bug.cgi?id=612118
             return {height: 0, width: 0, y: 0, x: 0}
-        
+
         return {}
 
       getWidestTickWidth: (svg, axisKey) ->
@@ -1023,7 +1022,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         data.forEach (row) ->
           series.forEach (series) ->
             v = row[series.y]
-            
+
             if series.axis? and options.axes[series.axis]?.ticksFormatter
               v = options.axes[series.axis].ticksFormatter(v)
 
@@ -1033,6 +1032,82 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
               widest = v
 
         return widest
+
+# ----
+
+
+# src/utils/ohlc.coffee
+      drawOhlc: (svg, axes, data, columnWidth, options, handlers, dimensions) ->
+        that = this
+        height = dimensions.height
+        width = dimensions.width
+
+        data = data.filter (s) -> s.type is 'ohlc'
+
+        if data.length == 0
+          return this
+
+        gainColor = options.series[0].gainColor if options.series[0].gainColor
+        lossColor = options.series[0].lossColor if options.series[0].lossColor
+
+        colGroup = svg.select('.content').selectAll('.ohlcGroup')
+          .data(data)
+          .enter().append('g')
+          .attr('class', (s) -> 'ohlcGroup series_' + s.index)
+
+        colGroup.selectAll('open').data((d) -> d.values)
+          .enter().append('svg:line')
+          .attr(
+            x1: (d) ->
+              tmpX = axes.xScale(d.x)
+              return tmpX - 20
+            y1: (d) ->
+              return axes[d.axis + 'Scale'](d.open)
+            x2: (d) ->
+              tmpX = axes.xScale(d.x)
+              return tmpX
+            y2: (d) ->
+              return axes[d.axis + 'Scale'](d.open)
+            stroke: (d) ->
+              if d.open > d.close
+                return lossColor
+              return gainColor
+          )
+
+        colGroup.selectAll('close').data((d) -> d.values)
+          .enter().append('svg:line')
+          .attr(
+            x1: (d) ->
+              tmpX = axes.xScale(d.x)
+              return tmpX
+            y1: (d) ->
+              return axes[d.axis + 'Scale'](d.close)
+            x2: (d) ->
+              tmpX = axes.xScale(d.x)
+              return tmpX + 20
+            y2: (d) ->
+              return axes[d.axis + 'Scale'](d.close)
+            stroke: (d) ->
+              if d.open > d.close
+                return lossColor
+              return gainColor
+          )
+
+        colGroup.selectAll('line.stem').data((d) -> d.values)
+          .enter().append('svg:line')
+          .attr('class', (d) -> 'stem')
+          .attr(
+            x1: (d) -> axes.xScale(d.x)
+            x2: (d) -> axes.xScale(d.x)
+            y1: (d) -> axes[d.axis + 'Scale'](d.high)
+            y2: (d) -> axes[d.axis + 'Scale'](d.low)
+            stroke: (d) ->
+              if d.open > d.close
+                return lossColor
+              return gainColor
+          )
+
+        return this
 
 # ----
 
@@ -1070,11 +1145,11 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         options.axes = this.sanitizeAxes(options.axes, this.haveSecondYAxis(options.series))
         options.tooltip = this.sanitizeTooltip(options.tooltip)
         options.margin = this.sanitizeMargins(options.margin)
-        
+
         options.lineMode or= this.getDefaultOptions().lineMode
         options.tension = if /^\d+(\.\d+)?$/.test(options.tension) then options.tension \
           else this.getDefaultOptions().tension
-        
+
         options.drawLegend = options.drawLegend isnt false
         options.drawDots = options.drawDots isnt false
         options.columnsHGap = 5 unless angular.isNumber(options.columnsHGap)
@@ -1147,7 +1222,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         options.forEach (s, i) ->
           s.axis = if s.axis?.toLowerCase() isnt 'y2' then 'y' else 'y2'
           s.color or= colors(i)
-          s.type = if s.type in ['line', 'area', 'column', 'candlestick'] then s.type else "line"
+          s.type = if s.type in ['line', 'area', 'column', 'candlestick', 'ohlc'] then s.type else "line"
 
           if s.type is 'column'
             delete s.thickness
@@ -1230,7 +1305,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           if options.type is 'date'
             # Use d3.time.format as formatter
             options.ticksFormatter = d3.time.format(options.ticksFormat)
-            
+
           else
             # Use d3.format as formatter
             options.ticksFormatter = d3.format(options.ticksFormat)
@@ -1245,11 +1320,11 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           if options.type is 'date'
             # Use d3.time.format as formatter
             options.tooltipFormatter = d3.time.format(options.tooltipFormat)
-            
+
           else
             # Use d3.format as formatter
             options.tooltipFormatter = d3.format(options.tooltipFormat)
-        
+
         if options.ticksInterval?
           options.ticksInterval = this.getSanitizedNumber(options.ticksInterval)
 
