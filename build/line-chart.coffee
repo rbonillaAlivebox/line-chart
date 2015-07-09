@@ -1,5 +1,5 @@
 ###
-line-chart - v1.1.10 - 08 July 2015
+line-chart - v1.1.10 - 09 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
 ###
@@ -551,7 +551,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
 
         groups.enter().append('g')
           .on('click', (s, i) ->
-            if s.labelIsClick == false
+            if s.labelIsClickable == false
               return
             visibility = !(s.visible isnt false)
             dispatch.toggle(s, i, visibility)
@@ -573,41 +573,52 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
             )
           .each (s) ->
             item = d3.select(this)
-            item.append('circle')
-              .attr(
-                'fill': s.color
-                'stroke': s.color
-                'stroke-width': '2px'
-                'r': d/2
-              )
+            if s.iconIsVisible == true
+              item.append('circle')
+                .attr(
+                  'fill': s.color
+                  'stroke': s.color
+                  'stroke-width': '2px'
+                  'r': d/2
+                )
 
-            item.append('path')
-              .attr(
-                'clip-path': 'url(#legend-clip)'
-                'fill-opacity': if s.type in ['area', 'column'] then '1' else '0'
-                'fill': 'white'
-                'stroke': 'white'
-                'stroke-width': '2px'
-                'd': that.getLegendItemPath(s, d, d)
-              )
+              item.append('path')
+                .attr(
+                  'clip-path': 'url(#legend-clip)'
+                  'fill-opacity': if s.type in ['area', 'column'] then '1' else '0'
+                  'fill': 'white'
+                  'stroke': 'white'
+                  'stroke-width': '2px'
+                  'd': that.getLegendItemPath(s, d, d)
+                )
 
-            item.append('circle')
-              .attr(
-                'fill-opacity': 0
-                'stroke': s.color
-                'stroke-width': '2px'
-                'r': d/2
-              )
+              item.append('circle')
+                .attr(
+                  'fill-opacity': 0
+                  'stroke': s.color
+                  'stroke-width': '2px'
+                  'r': d/2
+                )
 
-            item.append('text')
-              .attr(
-                'class': (d, i) -> "legendText series_#{i}"
-                'font-family': 'Courier'
-                'font-size': 10
-                'transform': 'translate(13, 4)'
-                'text-rendering': 'geometric-precision'
-              )
-              .text(s.label || s.y)
+            if s.labelIsVisible == true or s.extraLabelIsVisible == true
+              series.item = item.append('text')
+                .attr(
+                  'class': (d, i) -> "legendText series_#{i}"
+                  'font-family': 'Courier'
+                  'font-size': 10
+                  'transform': 'translate(13, 4)'
+                  'text-rendering': 'geometric-precision'
+                )
+                .text((s) ->
+                  value = ''
+                  if s.labelIsVisible
+                    value = s.label || s.y
+
+                  if s.extraLabelIsVisible
+                    value = value + ' ' + s.extraLabel
+
+                  return value
+                )
 
         # Translate every legend g node to its position
         translateLegends = () ->
@@ -1125,7 +1136,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
             x: {type: 'linear', key: 'x'}
             y: {type: 'linear'}
           }
-          series: [labelIsClick: true]
+          series: [labelIsClickable: true, iconIsVisible: true, labelIsVisible: true, extraLabelIsVisible: false, extraLabel: '']
           drawLegend: true
           drawDots: true
           stacks: []
@@ -1228,7 +1239,12 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           s.axis = if s.axis?.toLowerCase() isnt 'y2' then 'y' else 'y2'
           s.color or= colors(i)
           s.type = if s.type in ['line', 'area', 'column', 'candlestick', 'ohlc'] then s.type else "line"
-          s.labelIsClick = if s.labelIsClick in [true, false] then s.labelIsClick else true
+          s.labelIsClickable = if s.labelIsClickable in [true, false] then s.labelIsClickable else true
+          s.iconIsVisible = if s.iconIsVisible in [true, false] then s.iconIsVisible else true
+          s.labelIsVisible = if s.labelIsVisible in [true, false] then s.labelIsVisible else true
+          s.extraLabelIsVisible = if s.extraLabelIsVisible in [true, false] then s.extraLabelIsVisible else true
+          if s.extraLabel is null or s.extraLabel is undefined
+            s.extraLabel = ''
 
           if s.type is 'column'
             delete s.thickness
@@ -1658,11 +1674,11 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
 
           dispatch.focus(v, series.values.indexOf(v), [xInvert, yInvert])
 
-          if options.tooltip.type is 'complete'
-            text = v.x + ' : ' + v.y
-            if options.tooltip.formatter
-              text = options.tooltip.formatter(v.x, v.y, options.series[index])
+          text = v.x + ' : ' + v.y
+          if options.tooltip.formatter
+            text = options.tooltip.formatter(v.x, v.y, options.series[index])
 
+          if options.tooltip.type is 'complete'
             right = item.select('.rightTT')
             rText = right.select('text')
             rText.text(text)

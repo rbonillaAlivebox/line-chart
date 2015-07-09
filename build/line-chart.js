@@ -1,6 +1,6 @@
 
 /*
-line-chart - v1.1.10 - 08 July 2015
+line-chart - v1.1.10 - 09 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
  */
@@ -576,7 +576,7 @@ mod.factory('n3utils', [
         groups = legend.selectAll('.legendItem').data(series);
         groups.enter().append('g').on('click', function(s, i) {
           var visibility;
-          if (s.labelIsClick === false) {
+          if (s.labelIsClickable === false) {
             return;
           }
           visibility = !(s.visible !== false);
@@ -601,35 +601,49 @@ mod.factory('n3utils', [
         }).each(function(s) {
           var item, _ref;
           item = d3.select(this);
-          item.append('circle').attr({
-            'fill': s.color,
-            'stroke': s.color,
-            'stroke-width': '2px',
-            'r': d / 2
-          });
-          item.append('path').attr({
-            'clip-path': 'url(#legend-clip)',
-            'fill-opacity': (_ref = s.type) === 'area' || _ref === 'column' ? '1' : '0',
-            'fill': 'white',
-            'stroke': 'white',
-            'stroke-width': '2px',
-            'd': that.getLegendItemPath(s, d, d)
-          });
-          item.append('circle').attr({
-            'fill-opacity': 0,
-            'stroke': s.color,
-            'stroke-width': '2px',
-            'r': d / 2
-          });
-          return item.append('text').attr({
-            'class': function(d, i) {
-              return "legendText series_" + i;
-            },
-            'font-family': 'Courier',
-            'font-size': 10,
-            'transform': 'translate(13, 4)',
-            'text-rendering': 'geometric-precision'
-          }).text(s.label || s.y);
+          if (s.iconIsVisible === true) {
+            item.append('circle').attr({
+              'fill': s.color,
+              'stroke': s.color,
+              'stroke-width': '2px',
+              'r': d / 2
+            });
+            item.append('path').attr({
+              'clip-path': 'url(#legend-clip)',
+              'fill-opacity': (_ref = s.type) === 'area' || _ref === 'column' ? '1' : '0',
+              'fill': 'white',
+              'stroke': 'white',
+              'stroke-width': '2px',
+              'd': that.getLegendItemPath(s, d, d)
+            });
+            item.append('circle').attr({
+              'fill-opacity': 0,
+              'stroke': s.color,
+              'stroke-width': '2px',
+              'r': d / 2
+            });
+          }
+          if (s.labelIsVisible === true || s.extraLabelIsVisible === true) {
+            return series.item = item.append('text').attr({
+              'class': function(d, i) {
+                return "legendText series_" + i;
+              },
+              'font-family': 'Courier',
+              'font-size': 10,
+              'transform': 'translate(13, 4)',
+              'text-rendering': 'geometric-precision'
+            }).text(function(s) {
+              var value;
+              value = '';
+              if (s.labelIsVisible) {
+                value = s.label || s.y;
+              }
+              if (s.extraLabelIsVisible) {
+                value = value + ' ' + s.extraLabel;
+              }
+              return value;
+            });
+          }
         });
         translateLegends = function() {
           var left, right, _ref;
@@ -1170,7 +1184,11 @@ mod.factory('n3utils', [
           },
           series: [
             {
-              labelIsClick: true
+              labelIsClickable: true,
+              iconIsVisible: true,
+              labelIsVisible: true,
+              extraLabelIsVisible: false,
+              extraLabel: ''
             }
           ],
           drawLegend: true,
@@ -1290,11 +1308,17 @@ mod.factory('n3utils', [
           }
         });
         options.forEach(function(s, i) {
-          var cnt, _ref, _ref1, _ref2, _ref3, _ref4;
+          var cnt, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
           s.axis = ((_ref = s.axis) != null ? _ref.toLowerCase() : void 0) !== 'y2' ? 'y' : 'y2';
           s.color || (s.color = colors(i));
           s.type = (_ref1 = s.type) === 'line' || _ref1 === 'area' || _ref1 === 'column' || _ref1 === 'candlestick' || _ref1 === 'ohlc' ? s.type : "line";
-          s.labelIsClick = (_ref2 = s.labelIsClick) === true || _ref2 === false ? s.labelIsClick : true;
+          s.labelIsClickable = (_ref2 = s.labelIsClickable) === true || _ref2 === false ? s.labelIsClickable : true;
+          s.iconIsVisible = (_ref3 = s.iconIsVisible) === true || _ref3 === false ? s.iconIsVisible : true;
+          s.labelIsVisible = (_ref4 = s.labelIsVisible) === true || _ref4 === false ? s.labelIsVisible : true;
+          s.extraLabelIsVisible = (_ref5 = s.extraLabelIsVisible) === true || _ref5 === false ? s.extraLabelIsVisible : true;
+          if (s.extraLabel === null || s.extraLabel === void 0) {
+            s.extraLabel = '';
+          }
           if (s.type === 'column') {
             delete s.thickness;
             delete s.lineMode;
@@ -1303,8 +1327,8 @@ mod.factory('n3utils', [
           } else if (!/^\d+px$/.test(s.thickness)) {
             s.thickness = '1px';
           }
-          if ((_ref3 = s.type) === 'line' || _ref3 === 'area') {
-            if ((_ref4 = s.lineMode) !== 'dashed') {
+          if ((_ref6 = s.type) === 'line' || _ref6 === 'area') {
+            if ((_ref7 = s.lineMode) !== 'dashed') {
               delete s.lineMode;
             }
             if (s.drawDots !== false && (s.dotSize == null)) {
@@ -1715,11 +1739,11 @@ mod.factory('n3utils', [
           yInvert = axes.yScale.invert(y);
           v = that.getClosestPoint(series.values, xInvert);
           dispatch.focus(v, series.values.indexOf(v), [xInvert, yInvert]);
+          text = v.x + ' : ' + v.y;
+          if (options.tooltip.formatter) {
+            text = options.tooltip.formatter(v.x, v.y, options.series[index]);
+          }
           if (options.tooltip.type === 'complete') {
-            text = v.x + ' : ' + v.y;
-            if (options.tooltip.formatter) {
-              text = options.tooltip.formatter(v.x, v.y, options.series[index]);
-            }
             right = item.select('.rightTT');
             rText = right.select('text');
             rText.text(text);

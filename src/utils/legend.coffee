@@ -58,7 +58,7 @@
 
         groups.enter().append('g')
           .on('click', (s, i) ->
-            if s.labelIsClick == false
+            if s.labelIsClickable == false
               return
             visibility = !(s.visible isnt false)
             dispatch.toggle(s, i, visibility)
@@ -80,41 +80,52 @@
             )
           .each (s) ->
             item = d3.select(this)
-            item.append('circle')
-              .attr(
-                'fill': s.color
-                'stroke': s.color
-                'stroke-width': '2px'
-                'r': d/2
-              )
+            if s.iconIsVisible == true
+              item.append('circle')
+                .attr(
+                  'fill': s.color
+                  'stroke': s.color
+                  'stroke-width': '2px'
+                  'r': d/2
+                )
 
-            item.append('path')
-              .attr(
-                'clip-path': 'url(#legend-clip)'
-                'fill-opacity': if s.type in ['area', 'column'] then '1' else '0'
-                'fill': 'white'
-                'stroke': 'white'
-                'stroke-width': '2px'
-                'd': that.getLegendItemPath(s, d, d)
-              )
+              item.append('path')
+                .attr(
+                  'clip-path': 'url(#legend-clip)'
+                  'fill-opacity': if s.type in ['area', 'column'] then '1' else '0'
+                  'fill': 'white'
+                  'stroke': 'white'
+                  'stroke-width': '2px'
+                  'd': that.getLegendItemPath(s, d, d)
+                )
 
-            item.append('circle')
-              .attr(
-                'fill-opacity': 0
-                'stroke': s.color
-                'stroke-width': '2px'
-                'r': d/2
-              )
+              item.append('circle')
+                .attr(
+                  'fill-opacity': 0
+                  'stroke': s.color
+                  'stroke-width': '2px'
+                  'r': d/2
+                )
 
-            item.append('text')
-              .attr(
-                'class': (d, i) -> "legendText series_#{i}"
-                'font-family': 'Courier'
-                'font-size': 10
-                'transform': 'translate(13, 4)'
-                'text-rendering': 'geometric-precision'
-              )
-              .text(s.label || s.y)
+            if s.labelIsVisible == true or s.extraLabelIsVisible == true
+              series.item = item.append('text')
+                .attr(
+                  'class': (d, i) -> "legendText series_#{i}"
+                  'font-family': 'Courier'
+                  'font-size': 10
+                  'transform': 'translate(13, 4)'
+                  'text-rendering': 'geometric-precision'
+                )
+                .text((s) ->
+                  value = ''
+                  if s.labelIsVisible
+                    value = s.label || s.y
+
+                  if s.extraLabelIsVisible
+                    value = value + ' ' + s.extraLabel
+
+                  return value
+                )
 
         # Translate every legend g node to its position
         translateLegends = () ->

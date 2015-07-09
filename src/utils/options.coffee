@@ -8,7 +8,7 @@
             x: {type: 'linear', key: 'x'}
             y: {type: 'linear'}
           }
-          series: [labelIsClick: true]
+          series: [labelIsClickable: true, iconIsVisible: true, labelIsVisible: true, extraLabelIsVisible: false, extraLabel: '']
           drawLegend: true
           drawDots: true
           stacks: []
@@ -111,7 +111,12 @@
           s.axis = if s.axis?.toLowerCase() isnt 'y2' then 'y' else 'y2'
           s.color or= colors(i)
           s.type = if s.type in ['line', 'area', 'column', 'candlestick', 'ohlc'] then s.type else "line"
-          s.labelIsClick = if s.labelIsClick in [true, false] then s.labelIsClick else true
+          s.labelIsClickable = if s.labelIsClickable in [true, false] then s.labelIsClickable else true
+          s.iconIsVisible = if s.iconIsVisible in [true, false] then s.iconIsVisible else true
+          s.labelIsVisible = if s.labelIsVisible in [true, false] then s.labelIsVisible else true
+          s.extraLabelIsVisible = if s.extraLabelIsVisible in [true, false] then s.extraLabelIsVisible else true
+          if s.extraLabel is null or s.extraLabel is undefined
+            s.extraLabel = ''
 
           if s.type is 'column'
             delete s.thickness

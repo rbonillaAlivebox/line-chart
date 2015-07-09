@@ -50,11 +50,11 @@
 
           dispatch.focus(v, series.values.indexOf(v), [xInvert, yInvert])
 
-          if options.tooltip.type is 'complete'
-            text = v.x + ' : ' + v.y
-            if options.tooltip.formatter
-              text = options.tooltip.formatter(v.x, v.y, options.series[index])
+          text = v.x + ' : ' + v.y
+          if options.tooltip.formatter
+            text = options.tooltip.formatter(v.x, v.y, options.series[index])
 
+          if options.tooltip.type is 'complete'
             right = item.select('.rightTT')
             rText = right.select('text')
             rText.text(text)
