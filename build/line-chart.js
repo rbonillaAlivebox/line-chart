@@ -576,6 +576,9 @@ mod.factory('n3utils', [
         groups = legend.selectAll('.legendItem').data(series);
         groups.enter().append('g').on('click', function(s, i) {
           var visibility;
+          if (s.labelIsClick === false) {
+            return;
+          }
           visibility = !(s.visible !== false);
           dispatch.toggle(s, i, visibility);
           return typeof handlers.onSeriesVisibilityChange === "function" ? handlers.onSeriesVisibilityChange({
@@ -1150,7 +1153,8 @@ mod.factory('n3utils', [
       getDefaultOptions: function() {
         return {
           tooltip: {
-            mode: 'scrubber'
+            mode: 'scrubber',
+            type: 'complete'
           },
           lineMode: 'linear',
           tension: 0.7,
@@ -1164,7 +1168,11 @@ mod.factory('n3utils', [
               type: 'linear'
             }
           },
-          series: [],
+          series: [
+            {
+              labelIsClick: true
+            }
+          ],
           drawLegend: true,
           drawDots: true,
           stacks: [],
@@ -1244,7 +1252,7 @@ mod.factory('n3utils', [
         return stacks;
       },
       sanitizeTooltip: function(options) {
-        var _ref;
+        var _ref, _ref1;
         if (!options) {
           return {
             mode: 'scrubber'
@@ -1252,6 +1260,9 @@ mod.factory('n3utils', [
         }
         if ((_ref = options.mode) !== 'none' && _ref !== 'axes' && _ref !== 'scrubber') {
           options.mode = 'scrubber';
+        }
+        if ((_ref1 = options.type) !== 'complete' && _ref1 !== 'partial') {
+          options.type = 'complete';
         }
         if (options.mode === 'scrubber') {
           delete options.interpolate;
@@ -1279,10 +1290,11 @@ mod.factory('n3utils', [
           }
         });
         options.forEach(function(s, i) {
-          var cnt, _ref, _ref1, _ref2, _ref3;
+          var cnt, _ref, _ref1, _ref2, _ref3, _ref4;
           s.axis = ((_ref = s.axis) != null ? _ref.toLowerCase() : void 0) !== 'y2' ? 'y' : 'y2';
           s.color || (s.color = colors(i));
           s.type = (_ref1 = s.type) === 'line' || _ref1 === 'area' || _ref1 === 'column' || _ref1 === 'candlestick' || _ref1 === 'ohlc' ? s.type : "line";
+          s.labelIsClick = (_ref2 = s.labelIsClick) === true || _ref2 === false ? s.labelIsClick : true;
           if (s.type === 'column') {
             delete s.thickness;
             delete s.lineMode;
@@ -1291,8 +1303,8 @@ mod.factory('n3utils', [
           } else if (!/^\d+px$/.test(s.thickness)) {
             s.thickness = '1px';
           }
-          if ((_ref2 = s.type) === 'line' || _ref2 === 'area') {
-            if ((_ref3 = s.lineMode) !== 'dashed') {
+          if ((_ref3 = s.type) === 'line' || _ref3 === 'area') {
+            if ((_ref4 = s.lineMode) !== 'dashed') {
               delete s.lineMode;
             }
             if (s.drawDots !== false && (s.dotSize == null)) {
@@ -1589,6 +1601,8 @@ mod.factory('n3utils', [
           return s.type === 'column';
         }).length) {
           this.adjustXDomainForColumns(domain, data, axesOptions.x.key);
+        } else {
+          this.adjustXDomainForAll(domain, data, axesOptions.x.key);
         }
         o = axesOptions.x;
         if (o.min != null) {
@@ -1621,6 +1635,15 @@ mod.factory('n3utils', [
           return domain[1] = new Date(domain[1].getTime() + step);
         } else {
           domain[0] = domain[0] - step;
+          return domain[1] = domain[1] + step;
+        }
+      },
+      adjustXDomainForAll: function(domain, data, field) {
+        var step;
+        step = this.getAverageStep(data, field);
+        if (angular.isDate(domain[0])) {
+          return domain[1] = new Date(domain[1].getTime() + step);
+        } else {
           return domain[1] = domain[1] + step;
         }
       },
@@ -1692,37 +1715,41 @@ mod.factory('n3utils', [
           yInvert = axes.yScale.invert(y);
           v = that.getClosestPoint(series.values, xInvert);
           dispatch.focus(v, series.values.indexOf(v), [xInvert, yInvert]);
-          text = v.x + ' : ' + v.y;
-          if (options.tooltip.formatter) {
-            text = options.tooltip.formatter(v.x, v.y, options.series[index]);
+          if (options.tooltip.type === 'complete') {
+            text = v.x + ' : ' + v.y;
+            if (options.tooltip.formatter) {
+              text = options.tooltip.formatter(v.x, v.y, options.series[index]);
+            }
+            right = item.select('.rightTT');
+            rText = right.select('text');
+            rText.text(text);
+            left = item.select('.leftTT');
+            lText = left.select('text');
+            lText.text(text);
+            sizes = {
+              right: that.getTextBBox(rText[0][0]).width + 5,
+              left: that.getTextBBox(lText[0][0]).width + 5
+            };
           }
-          right = item.select('.rightTT');
-          rText = right.select('text');
-          rText.text(text);
-          left = item.select('.leftTT');
-          lText = left.select('text');
-          lText.text(text);
-          sizes = {
-            right: that.getTextBBox(rText[0][0]).width + 5,
-            left: that.getTextBBox(lText[0][0]).width + 5
-          };
           side = series.axis === 'y2' ? 'right' : 'left';
           xPos = axes.xScale(v.x);
-          if (side === 'left') {
-            if (xPos + that.getTextBBox(lText[0][0]).x - 10 < 0) {
-              side = 'right';
+          if (options.tooltip.type === 'complete') {
+            if (side === 'left') {
+              if (xPos + that.getTextBBox(lText[0][0]).x - 10 < 0) {
+                side = 'right';
+              }
+            } else if (side === 'right') {
+              if (xPos + sizes.right > that.getTextBBox(svg.select('.glass')[0][0]).width) {
+                side = 'left';
+              }
             }
-          } else if (side === 'right') {
-            if (xPos + sizes.right > that.getTextBBox(svg.select('.glass')[0][0]).width) {
-              side = 'left';
+            if (side === 'left') {
+              ease(right).attr('opacity', 0);
+              ease(left).attr('opacity', 1);
+            } else {
+              ease(right).attr('opacity', 1);
+              ease(left).attr('opacity', 0);
             }
-          }
-          if (side === 'left') {
-            ease(right).attr('opacity', 0);
-            ease(left).attr('opacity', 1);
-          } else {
-            ease(right).attr('opacity', 1);
-            ease(left).attr('opacity', 0);
           }
           positions[index] = {
             index: index,
@@ -1744,16 +1771,20 @@ mod.factory('n3utils', [
           }
           p = positions[index];
           item = svg.select(".scrubberItem.series_" + index);
-          tt = item.select("." + p.side + "TT");
+          if (options.tooltip.type === 'complete') {
+            tt = item.select("." + p.side + "TT");
+          }
           xOffset = (p.side === 'left' ? series.xOffset : -series.xOffset);
-          tt.select('text').attr('transform', function() {
-            if (p.side === 'left') {
-              return "translate(" + (-3 - tickLength - xOffset) + ", " + (p.labelOffset + 3) + ")";
-            } else {
-              return "translate(" + (4 + tickLength + xOffset) + ", " + (p.labelOffset + 3) + ")";
-            }
-          });
-          tt.select('path').attr('d', that.getScrubberPath(p.sizes[p.side] + 1, p.labelOffset, p.side, tickLength + xOffset));
+          if (options.tooltip.type === 'complete') {
+            tt.select('text').attr('transform', function() {
+              if (p.side === 'left') {
+                return "translate(" + (-3 - tickLength - xOffset) + ", " + (p.labelOffset + 3) + ")";
+              } else {
+                return "translate(" + (4 + tickLength + xOffset) + ", " + (p.labelOffset + 3) + ")";
+              }
+            });
+            tt.select('path').attr('d', that.getScrubberPath(p.sizes[p.side] + 1, p.labelOffset, p.side, tickLength + xOffset));
+          }
           return ease(item).attr({
             'transform': "translate(" + (positions[index].x + series.xOffset) + ", " + positions[index].y + ")"
           });

@@ -551,6 +551,8 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
 
         groups.enter().append('g')
           .on('click', (s, i) ->
+            if s.labelIsClick == false
+              return
             visibility = !(s.visible isnt false)
             dispatch.toggle(s, i, visibility)
             handlers.onSeriesVisibilityChange?({
@@ -559,7 +561,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
               newVisibility: visibility
             })
           )
-        
+
         groups.attr(
               'class': (s, i) -> "legendItem series_#{i} #{s.axis}"
               'opacity': (s, i) ->
@@ -1115,7 +1117,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
 # src/utils/options.coffee
       getDefaultOptions: ->
         return {
-          tooltip: {mode: 'scrubber'}
+          tooltip: {mode: 'scrubber', type: 'complete'}
           lineMode: 'linear'
           tension: 0.7
           margin: this.getDefaultMargins()
@@ -1123,7 +1125,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
             x: {type: 'linear', key: 'x'}
             y: {type: 'linear'}
           }
-          series: []
+          series: [labelIsClick: true]
           drawLegend: true
           drawDots: true
           stacks: []
@@ -1199,6 +1201,9 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         if options.mode not in ['none', 'axes', 'scrubber']
           options.mode = 'scrubber'
 
+        if options.type not in ['complete', 'partial']
+          options.type = 'complete'
+
         if options.mode is 'scrubber'
           delete options.interpolate
         else
@@ -1223,6 +1228,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           s.axis = if s.axis?.toLowerCase() isnt 'y2' then 'y' else 'y2'
           s.color or= colors(i)
           s.type = if s.type in ['line', 'area', 'column', 'candlestick', 'ohlc'] then s.type else "line"
+          s.labelIsClick = if s.labelIsClick in [true, false] then s.labelIsClick else true
 
           if s.type is 'column'
             delete s.thickness
@@ -1439,11 +1445,11 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         # ticks can be either an array of tick values
         if angular.isArray(o.ticks)
           axis.tickValues(o.ticks)
-        
+
         # or a number of ticks (approximately)
         else if angular.isNumber(o.ticks)
           axis.ticks(o.ticks)
-        
+
         # or a range function e.g. d3.time.minute
         else if angular.isFunction(o.ticks)
           axis.ticks(o.ticks, o.ticksInterval)
@@ -1455,7 +1461,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
 
         axis = svg.selectAll('.x.axis')
           .call(scales.xAxis)
-        
+
         if options.axes.x.ticksRotate?
           axis.selectAll('.tick>text')
             .attr('dy', null)
@@ -1467,7 +1473,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           scales.yScale.domain(yDomain).nice()
           axis = svg.selectAll('.y.axis')
             .call(scales.yAxis)
-          
+
           if options.axes.y.ticksRotate?
             axis.selectAll('.tick>text')
               .attr('transform', 'rotate(' + options.axes.y.ticksRotate + ' -6,0)')
@@ -1478,7 +1484,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           scales.y2Scale.domain(y2Domain).nice()
           axis = svg.selectAll('.y2.axis')
             .call(scales.y2Axis)
-          
+
           if options.axes.y2.ticksRotate?
             axis.selectAll('.tick>text')
               .attr('transform', 'rotate(' + options.axes.y2.ticksRotate + ' 6,0)')
@@ -1544,6 +1550,8 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         domain = this.xExtent(data, axesOptions.x.key)
         if series.filter((s) -> s.type is 'column').length
           this.adjustXDomainForColumns(domain, data, axesOptions.x.key)
+        else
+          this.adjustXDomainForAll(domain, data, axesOptions.x.key)
 
         o = axesOptions.x
         domain[0] = o.min if o.min?
@@ -1570,6 +1578,14 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           domain[1] = new Date(domain[1].getTime() + step)
         else
           domain[0] = domain[0] - step
+          domain[1] = domain[1] + step
+
+      adjustXDomainForAll: (domain, data, field) ->
+        step = this.getAverageStep(data, field)
+
+        if angular.isDate(domain[0])
+          domain[1] = new Date(domain[1].getTime() + step)
+        else
           domain[1] = domain[1] + step
 
       getAverageStep: (data, field) ->
@@ -1609,7 +1625,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         # Return min and max if index is out of bounds
         return values[0] if i is 0
         return values[values.length - 1] if i > values.length - 1
-        
+
         # get element before bisection
         d0 = values[i - 1]
 
@@ -1642,43 +1658,46 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
 
           dispatch.focus(v, series.values.indexOf(v), [xInvert, yInvert])
 
-          text = v.x + ' : ' + v.y
-          if options.tooltip.formatter
-            text = options.tooltip.formatter(v.x, v.y, options.series[index])
+          if options.tooltip.type is 'complete'
+            text = v.x + ' : ' + v.y
+            if options.tooltip.formatter
+              text = options.tooltip.formatter(v.x, v.y, options.series[index])
 
-          right = item.select('.rightTT')
-          rText = right.select('text')
-          rText.text(text)
+            right = item.select('.rightTT')
+            rText = right.select('text')
+            rText.text(text)
 
-          left = item.select('.leftTT')
-          lText = left.select('text')
-          lText.text(text)
+            left = item.select('.leftTT')
+            lText = left.select('text')
+            lText.text(text)
 
-          sizes =
-            right: that.getTextBBox(rText[0][0]).width + 5
-            left: that.getTextBBox(lText[0][0]).width + 5
+            sizes =
+              right: that.getTextBBox(rText[0][0]).width + 5
+              left: that.getTextBBox(lText[0][0]).width + 5
 
           side = if series.axis is 'y2' then 'right' else 'left'
 
           xPos = axes.xScale(v.x)
-          if side is 'left'
-            side = 'right' if xPos + that.getTextBBox(lText[0][0]).x - 10 < 0
-          else if side is 'right'
-            side = 'left' if xPos + sizes.right > that.getTextBBox(svg.select('.glass')[0][0]).width
 
-          if side is 'left'
-            ease(right).attr('opacity', 0)
-            ease(left).attr('opacity', 1)
-          else
-            ease(right).attr('opacity', 1)
-            ease(left).attr('opacity', 0)
+          if options.tooltip.type is 'complete'
+            if side is 'left'
+              side = 'right' if xPos + that.getTextBBox(lText[0][0]).x - 10 < 0
+            else if side is 'right'
+              side = 'left' if xPos + sizes.right > that.getTextBBox(svg.select('.glass')[0][0]).width
+
+            if side is 'left'
+              ease(right).attr('opacity', 0)
+              ease(left).attr('opacity', 1)
+            else
+              ease(right).attr('opacity', 1)
+              ease(left).attr('opacity', 0)
 
           positions[index] = {index, x: xPos, y: axes[v.axis + 'Scale'](v.y + v.y0), side, sizes}
 
           # Use a coloring function if defined, else use a color string value
           color = if angular.isFunction(series.color) \
             then series.color(v, series.values.indexOf(v)) else series.color
-          
+
           # Color the elements of the scrubber
           item.selectAll('circle').attr('stroke', color)
           item.selectAll('path').attr('fill', color)
@@ -1694,28 +1713,30 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           p = positions[index]
           item = svg.select(".scrubberItem.series_#{index}")
 
-          tt = item.select(".#{p.side}TT")
+          if options.tooltip.type is 'complete'
+            tt = item.select(".#{p.side}TT")
 
           xOffset = (if p.side is 'left' then series.xOffset else (-series.xOffset))
 
-          tt.select('text')
-            .attr('transform', ->
-              if p.side is 'left'
-                return "translate(#{-3 - tickLength - xOffset}, #{p.labelOffset+3})"
-              else
-                return "translate(#{4 + tickLength + xOffset}, #{p.labelOffset+3})"
-            )
-
-          tt.select('path')
-            .attr(
-              'd',
-              that.getScrubberPath(
-                p.sizes[p.side] + 1,
-                p.labelOffset,
-                p.side,
-                tickLength + xOffset
+          if options.tooltip.type is 'complete'
+            tt.select('text')
+              .attr('transform', ->
+                if p.side is 'left'
+                  return "translate(#{-3 - tickLength - xOffset}, #{p.labelOffset+3})"
+                else
+                  return "translate(#{4 + tickLength + xOffset}, #{p.labelOffset+3})"
               )
-            )
+
+            tt.select('path')
+              .attr(
+                'd',
+                that.getScrubberPath(
+                  p.sizes[p.side] + 1,
+                  p.labelOffset,
+                  p.side,
+                  tickLength + xOffset
+                )
+              )
 
           ease(item).attr(
             'transform': """

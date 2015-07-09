@@ -101,11 +101,11 @@
         # ticks can be either an array of tick values
         if angular.isArray(o.ticks)
           axis.tickValues(o.ticks)
-        
+
         # or a number of ticks (approximately)
         else if angular.isNumber(o.ticks)
           axis.ticks(o.ticks)
-        
+
         # or a range function e.g. d3.time.minute
         else if angular.isFunction(o.ticks)
           axis.ticks(o.ticks, o.ticksInterval)
@@ -117,7 +117,7 @@
 
         axis = svg.selectAll('.x.axis')
           .call(scales.xAxis)
-        
+
         if options.axes.x.ticksRotate?
           axis.selectAll('.tick>text')
             .attr('dy', null)
@@ -129,7 +129,7 @@
           scales.yScale.domain(yDomain).nice()
           axis = svg.selectAll('.y.axis')
             .call(scales.yAxis)
-          
+
           if options.axes.y.ticksRotate?
             axis.selectAll('.tick>text')
               .attr('transform', 'rotate(' + options.axes.y.ticksRotate + ' -6,0)')
@@ -140,7 +140,7 @@
           scales.y2Scale.domain(y2Domain).nice()
           axis = svg.selectAll('.y2.axis')
             .call(scales.y2Axis)
-          
+
           if options.axes.y2.ticksRotate?
             axis.selectAll('.tick>text')
               .attr('transform', 'rotate(' + options.axes.y2.ticksRotate + ' 6,0)')
@@ -206,6 +206,8 @@
         domain = this.xExtent(data, axesOptions.x.key)
         if series.filter((s) -> s.type is 'column').length
           this.adjustXDomainForColumns(domain, data, axesOptions.x.key)
+        else
+          this.adjustXDomainForAll(domain, data, axesOptions.x.key)
 
         o = axesOptions.x
         domain[0] = o.min if o.min?
@@ -232,6 +234,14 @@
           domain[1] = new Date(domain[1].getTime() + step)
         else
           domain[0] = domain[0] - step
+          domain[1] = domain[1] + step
+
+      adjustXDomainForAll: (domain, data, field) ->
+        step = this.getAverageStep(data, field)
+
+        if angular.isDate(domain[0])
+          domain[1] = new Date(domain[1].getTime() + step)
+        else
           domain[1] = domain[1] + step
 
       getAverageStep: (data, field) ->

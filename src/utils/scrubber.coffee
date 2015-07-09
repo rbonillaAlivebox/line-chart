@@ -17,7 +17,7 @@
         # Return min and max if index is out of bounds
         return values[0] if i is 0
         return values[values.length - 1] if i > values.length - 1
-        
+
         # get element before bisection
         d0 = values[i - 1]
 
@@ -50,43 +50,46 @@
 
           dispatch.focus(v, series.values.indexOf(v), [xInvert, yInvert])
 
-          text = v.x + ' : ' + v.y
-          if options.tooltip.formatter
-            text = options.tooltip.formatter(v.x, v.y, options.series[index])
+          if options.tooltip.type is 'complete'
+            text = v.x + ' : ' + v.y
+            if options.tooltip.formatter
+              text = options.tooltip.formatter(v.x, v.y, options.series[index])
 
-          right = item.select('.rightTT')
-          rText = right.select('text')
-          rText.text(text)
+            right = item.select('.rightTT')
+            rText = right.select('text')
+            rText.text(text)
 
-          left = item.select('.leftTT')
-          lText = left.select('text')
-          lText.text(text)
+            left = item.select('.leftTT')
+            lText = left.select('text')
+            lText.text(text)
 
-          sizes =
-            right: that.getTextBBox(rText[0][0]).width + 5
-            left: that.getTextBBox(lText[0][0]).width + 5
+            sizes =
+              right: that.getTextBBox(rText[0][0]).width + 5
+              left: that.getTextBBox(lText[0][0]).width + 5
 
           side = if series.axis is 'y2' then 'right' else 'left'
 
           xPos = axes.xScale(v.x)
-          if side is 'left'
-            side = 'right' if xPos + that.getTextBBox(lText[0][0]).x - 10 < 0
-          else if side is 'right'
-            side = 'left' if xPos + sizes.right > that.getTextBBox(svg.select('.glass')[0][0]).width
 
-          if side is 'left'
-            ease(right).attr('opacity', 0)
-            ease(left).attr('opacity', 1)
-          else
-            ease(right).attr('opacity', 1)
-            ease(left).attr('opacity', 0)
+          if options.tooltip.type is 'complete'
+            if side is 'left'
+              side = 'right' if xPos + that.getTextBBox(lText[0][0]).x - 10 < 0
+            else if side is 'right'
+              side = 'left' if xPos + sizes.right > that.getTextBBox(svg.select('.glass')[0][0]).width
+
+            if side is 'left'
+              ease(right).attr('opacity', 0)
+              ease(left).attr('opacity', 1)
+            else
+              ease(right).attr('opacity', 1)
+              ease(left).attr('opacity', 0)
 
           positions[index] = {index, x: xPos, y: axes[v.axis + 'Scale'](v.y + v.y0), side, sizes}
 
           # Use a coloring function if defined, else use a color string value
           color = if angular.isFunction(series.color) \
             then series.color(v, series.values.indexOf(v)) else series.color
-          
+
           # Color the elements of the scrubber
           item.selectAll('circle').attr('stroke', color)
           item.selectAll('path').attr('fill', color)
@@ -102,28 +105,30 @@
           p = positions[index]
           item = svg.select(".scrubberItem.series_#{index}")
 
-          tt = item.select(".#{p.side}TT")
+          if options.tooltip.type is 'complete'
+            tt = item.select(".#{p.side}TT")
 
           xOffset = (if p.side is 'left' then series.xOffset else (-series.xOffset))
 
-          tt.select('text')
-            .attr('transform', ->
-              if p.side is 'left'
-                return "translate(#{-3 - tickLength - xOffset}, #{p.labelOffset+3})"
-              else
-                return "translate(#{4 + tickLength + xOffset}, #{p.labelOffset+3})"
-            )
-
-          tt.select('path')
-            .attr(
-              'd',
-              that.getScrubberPath(
-                p.sizes[p.side] + 1,
-                p.labelOffset,
-                p.side,
-                tickLength + xOffset
+          if options.tooltip.type is 'complete'
+            tt.select('text')
+              .attr('transform', ->
+                if p.side is 'left'
+                  return "translate(#{-3 - tickLength - xOffset}, #{p.labelOffset+3})"
+                else
+                  return "translate(#{4 + tickLength + xOffset}, #{p.labelOffset+3})"
               )
-            )
+
+            tt.select('path')
+              .attr(
+                'd',
+                that.getScrubberPath(
+                  p.sizes[p.side] + 1,
+                  p.labelOffset,
+                  p.side,
+                  tickLength + xOffset
+                )
+              )
 
           ease(item).attr(
             'transform': """

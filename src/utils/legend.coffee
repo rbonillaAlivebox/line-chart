@@ -58,6 +58,8 @@
 
         groups.enter().append('g')
           .on('click', (s, i) ->
+            if s.labelIsClick == false
+              return
             visibility = !(s.visible isnt false)
             dispatch.toggle(s, i, visibility)
             handlers.onSeriesVisibilityChange?({
@@ -66,7 +68,7 @@
               newVisibility: visibility
             })
           )
-        
+
         groups.attr(
               'class': (s, i) -> "legendItem series_#{i} #{s.axis}"
               'opacity': (s, i) ->

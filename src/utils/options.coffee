@@ -1,6 +1,6 @@
       getDefaultOptions: ->
         return {
-          tooltip: {mode: 'scrubber'}
+          tooltip: {mode: 'scrubber', type: 'complete'}
           lineMode: 'linear'
           tension: 0.7
           margin: this.getDefaultMargins()
@@ -8,7 +8,7 @@
             x: {type: 'linear', key: 'x'}
             y: {type: 'linear'}
           }
-          series: []
+          series: [labelIsClick: true]
           drawLegend: true
           drawDots: true
           stacks: []
@@ -84,6 +84,9 @@
         if options.mode not in ['none', 'axes', 'scrubber']
           options.mode = 'scrubber'
 
+        if options.type not in ['complete', 'partial']
+          options.type = 'complete'
+
         if options.mode is 'scrubber'
           delete options.interpolate
         else
@@ -108,6 +111,7 @@
           s.axis = if s.axis?.toLowerCase() isnt 'y2' then 'y' else 'y2'
           s.color or= colors(i)
           s.type = if s.type in ['line', 'area', 'column', 'candlestick', 'ohlc'] then s.type else "line"
+          s.labelIsClick = if s.labelIsClick in [true, false] then s.labelIsClick else true
 
           if s.type is 'column'
             delete s.thickness
