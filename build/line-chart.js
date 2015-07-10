@@ -1,6 +1,6 @@
 
 /*
-line-chart - v1.1.10 - 09 July 2015
+line-chart - v1.1.10 - 10 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
  */
@@ -526,14 +526,14 @@ mod.factory('n3utils', [
         var cumul, i, j, leftLayout, leftWidths, padding, rightLayout, rightWidths, that, w;
         padding = 10;
         that = this;
-        leftWidths = this.getLegendItemsWidths(svg, 'y');
+        leftWidths = this.getLegendItemsWidths(svg, 'y', series);
         leftLayout = [0];
         i = 1;
         while (i < leftWidths.length) {
           leftLayout.push(leftWidths[i - 1] + leftLayout[i - 1] + padding);
           i++;
         }
-        rightWidths = this.getLegendItemsWidths(svg, 'y2');
+        rightWidths = this.getLegendItemsWidths(svg, 'y2', series);
         if (!(rightWidths.length > 0)) {
           return [leftLayout];
         }
@@ -549,10 +549,13 @@ mod.factory('n3utils', [
         rightLayout.reverse();
         return [leftLayout, rightLayout];
       },
-      getLegendItemsWidths: function(svg, axis) {
+      getLegendItemsWidths: function(svg, axis, series) {
         var bbox, i, items, that, widths;
         that = this;
         bbox = function(t) {
+          if (series[0].labelIsUpdatedWithTooltip) {
+            return that.getTextBBox(t).width + 100;
+          }
           return that.getTextBBox(t).width;
         };
         items = svg.selectAll(".legendItem." + axis);
@@ -622,27 +625,24 @@ mod.factory('n3utils', [
               'stroke-width': '2px',
               'r': d / 2
             });
-          }
-          if (s.labelIsVisible === true || s.extraLabelIsVisible === true) {
-            return series.item = item.append('text').attr({
-              'class': function(d, i) {
-                return "legendText series_" + i;
-              },
-              'font-family': 'Courier',
-              'font-size': 10,
-              'transform': 'translate(13, 4)',
-              'text-rendering': 'geometric-precision'
-            }).text(function(s) {
-              var value;
-              value = '';
-              if (s.labelIsVisible) {
-                value = s.label || s.y;
-              }
-              if (s.extraLabelIsVisible) {
-                value = value + ' ' + s.extraLabel;
-              }
-              return value;
-            });
+            if (s.labelIsVisible === true) {
+              return item.append('text').attr({
+                'class': function(d, i) {
+                  return "legendText series_" + i;
+                },
+                'font-family': 'Courier',
+                'font-size': 10,
+                'transform': 'translate(13, 4)',
+                'text-rendering': 'geometric-precision'
+              }).text(function(s) {
+                var value;
+                value = '';
+                if (s.labelIsVisible) {
+                  value = s.label || s.y;
+                }
+                return value;
+              });
+            }
           }
         });
         translateLegends = function() {
@@ -689,6 +689,18 @@ mod.factory('n3utils', [
           }
         });
         return isVisible;
+      },
+      updateTextLegendWithTooltip: function(svg, index, dataTooltip) {
+        var item1, item2, text, tmpText;
+        item1 = svg.select('.legend');
+        item2 = item1.select('.series_' + index);
+        text = item2.select('text');
+        tmpText = '';
+        if (item2.data()[0].labelIsVisible) {
+          tmpText = item2.data()[0].label;
+        }
+        tmpText = tmpText + ' ' + dataTooltip;
+        return text.text(tmpText);
       },
       drawLines: function(svg, scales, data, options, handlers) {
         var drawers, interpolateData, lineGroup;
@@ -1187,8 +1199,7 @@ mod.factory('n3utils', [
               labelIsClickable: true,
               iconIsVisible: true,
               labelIsVisible: true,
-              extraLabelIsVisible: false,
-              extraLabel: ''
+              labelIsUpdatedWithTooltip: false
             }
           ],
           drawLegend: true,
@@ -1315,10 +1326,7 @@ mod.factory('n3utils', [
           s.labelIsClickable = (_ref2 = s.labelIsClickable) === true || _ref2 === false ? s.labelIsClickable : true;
           s.iconIsVisible = (_ref3 = s.iconIsVisible) === true || _ref3 === false ? s.iconIsVisible : true;
           s.labelIsVisible = (_ref4 = s.labelIsVisible) === true || _ref4 === false ? s.labelIsVisible : true;
-          s.extraLabelIsVisible = (_ref5 = s.extraLabelIsVisible) === true || _ref5 === false ? s.extraLabelIsVisible : true;
-          if (s.extraLabel === null || s.extraLabel === void 0) {
-            s.extraLabel = '';
-          }
+          s.labelIsUpdatedWithTooltip = (_ref5 = s.labelIsUpdatedWithTooltip) === true || _ref5 === false ? s.labelIsUpdatedWithTooltip : false;
           if (s.type === 'column') {
             delete s.thickness;
             delete s.lineMode;
@@ -1742,6 +1750,9 @@ mod.factory('n3utils', [
           text = v.x + ' : ' + v.y;
           if (options.tooltip.formatter) {
             text = options.tooltip.formatter(v.x, v.y, options.series[index]);
+          }
+          if (options.series[series.index].labelIsUpdatedWithTooltip) {
+            that.updateTextLegendWithTooltip(svg, index, text);
           }
           if (options.tooltip.type === 'complete') {
             right = item.select('.rightTT');

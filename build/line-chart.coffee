@@ -1,5 +1,5 @@
 ###
-line-chart - v1.1.10 - 09 July 2015
+line-chart - v1.1.10 - 10 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
 ###
@@ -495,7 +495,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         padding = 10
         that = this
 
-        leftWidths = this.getLegendItemsWidths(svg, 'y')
+        leftWidths = this.getLegendItemsWidths(svg, 'y', series)
 
         leftLayout = [0]
         i = 1
@@ -504,7 +504,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           i++
 
 
-        rightWidths = this.getLegendItemsWidths(svg, 'y2')
+        rightWidths = this.getLegendItemsWidths(svg, 'y2', series)
         return [leftLayout] unless rightWidths.length > 0
 
         w = dimensions.width - dimensions.right - dimensions.left
@@ -521,9 +521,12 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
 
         return [leftLayout, rightLayout]
 
-      getLegendItemsWidths: (svg, axis) ->
+      getLegendItemsWidths: (svg, axis, series) ->
         that = this
-        bbox = (t) -> that.getTextBBox(t).width
+        bbox = (t) ->
+          if series[0].labelIsUpdatedWithTooltip
+            return that.getTextBBox(t).width + 100
+          return that.getTextBBox(t).width
 
         items = svg.selectAll(".legendItem.#{axis}")
         return [] unless items.length > 0
@@ -600,25 +603,22 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
                   'r': d/2
                 )
 
-            if s.labelIsVisible == true or s.extraLabelIsVisible == true
-              series.item = item.append('text')
-                .attr(
-                  'class': (d, i) -> "legendText series_#{i}"
-                  'font-family': 'Courier'
-                  'font-size': 10
-                  'transform': 'translate(13, 4)'
-                  'text-rendering': 'geometric-precision'
-                )
-                .text((s) ->
-                  value = ''
-                  if s.labelIsVisible
-                    value = s.label || s.y
+              if s.labelIsVisible == true
+                item.append('text')
+                  .attr(
+                    'class': (d, i) -> "legendText series_#{i}"
+                    'font-family': 'Courier'
+                    'font-size': 10
+                    'transform': 'translate(13, 4)'
+                    'text-rendering': 'geometric-precision'
+                  )
+                  .text((s) ->
+                    value = ''
+                    if s.labelIsVisible
+                      value = s.label || s.y
 
-                  if s.extraLabelIsVisible
-                    value = value + ' ' + s.extraLabel
-
-                  return value
-                )
+                    return value
+                  )
 
         # Translate every legend g node to its position
         translateLegends = () ->
@@ -670,6 +670,16 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           )
 
         return isVisible
+
+      updateTextLegendWithTooltip: (svg, index, dataTooltip) ->
+        item1 = svg.select('.legend')
+        item2 = item1.select('.series_' + index)
+        text = item2.select('text')
+        tmpText = ''
+        if item2.data()[0].labelIsVisible
+          tmpText = item2.data()[0].label
+        tmpText = tmpText + ' ' + dataTooltip
+        text.text(tmpText)
 
 # ----
 
@@ -1136,7 +1146,12 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
             x: {type: 'linear', key: 'x'}
             y: {type: 'linear'}
           }
-          series: [labelIsClickable: true, iconIsVisible: true, labelIsVisible: true, extraLabelIsVisible: false, extraLabel: '']
+          series: [
+            labelIsClickable: true,
+            iconIsVisible: true,
+            labelIsVisible: true,
+            labelIsUpdatedWithTooltip: false
+          ]
           drawLegend: true
           drawDots: true
           stacks: []
@@ -1242,9 +1257,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           s.labelIsClickable = if s.labelIsClickable in [true, false] then s.labelIsClickable else true
           s.iconIsVisible = if s.iconIsVisible in [true, false] then s.iconIsVisible else true
           s.labelIsVisible = if s.labelIsVisible in [true, false] then s.labelIsVisible else true
-          s.extraLabelIsVisible = if s.extraLabelIsVisible in [true, false] then s.extraLabelIsVisible else true
-          if s.extraLabel is null or s.extraLabel is undefined
-            s.extraLabel = ''
+          s.labelIsUpdatedWithTooltip = if s.labelIsUpdatedWithTooltip in [true, false] then s.labelIsUpdatedWithTooltip else false
 
           if s.type is 'column'
             delete s.thickness
@@ -1677,6 +1690,9 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           text = v.x + ' : ' + v.y
           if options.tooltip.formatter
             text = options.tooltip.formatter(v.x, v.y, options.series[index])
+
+          if options.series[series.index].labelIsUpdatedWithTooltip
+            that.updateTextLegendWithTooltip(svg, index, text)
 
           if options.tooltip.type is 'complete'
             right = item.select('.rightTT')

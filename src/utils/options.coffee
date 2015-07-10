@@ -8,7 +8,12 @@
             x: {type: 'linear', key: 'x'}
             y: {type: 'linear'}
           }
-          series: [labelIsClickable: true, iconIsVisible: true, labelIsVisible: true, extraLabelIsVisible: false, extraLabel: '']
+          series: [
+            labelIsClickable: true,
+            iconIsVisible: true,
+            labelIsVisible: true,
+            labelIsUpdatedWithTooltip: false
+          ]
           drawLegend: true
           drawDots: true
           stacks: []
@@ -114,9 +119,7 @@
           s.labelIsClickable = if s.labelIsClickable in [true, false] then s.labelIsClickable else true
           s.iconIsVisible = if s.iconIsVisible in [true, false] then s.iconIsVisible else true
           s.labelIsVisible = if s.labelIsVisible in [true, false] then s.labelIsVisible else true
-          s.extraLabelIsVisible = if s.extraLabelIsVisible in [true, false] then s.extraLabelIsVisible else true
-          if s.extraLabel is null or s.extraLabel is undefined
-            s.extraLabel = ''
+          s.labelIsUpdatedWithTooltip = if s.labelIsUpdatedWithTooltip in [true, false] then s.labelIsUpdatedWithTooltip else false
 
           if s.type is 'column'
             delete s.thickness

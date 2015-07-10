@@ -54,6 +54,9 @@
           if options.tooltip.formatter
             text = options.tooltip.formatter(v.x, v.y, options.series[index])
 
+          if options.series[series.index].labelIsUpdatedWithTooltip
+            that.updateTextLegendWithTooltip(svg, index, text)
+
           if options.tooltip.type is 'complete'
             right = item.select('.rightTT')
             rText = right.select('text')

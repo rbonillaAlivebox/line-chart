@@ -2,7 +2,7 @@
         padding = 10
         that = this
 
-        leftWidths = this.getLegendItemsWidths(svg, 'y')
+        leftWidths = this.getLegendItemsWidths(svg, 'y', series)
 
         leftLayout = [0]
         i = 1
@@ -11,7 +11,7 @@
           i++
 
 
-        rightWidths = this.getLegendItemsWidths(svg, 'y2')
+        rightWidths = this.getLegendItemsWidths(svg, 'y2', series)
         return [leftLayout] unless rightWidths.length > 0
 
         w = dimensions.width - dimensions.right - dimensions.left
@@ -28,9 +28,12 @@
 
         return [leftLayout, rightLayout]
 
-      getLegendItemsWidths: (svg, axis) ->
+      getLegendItemsWidths: (svg, axis, series) ->
         that = this
-        bbox = (t) -> that.getTextBBox(t).width
+        bbox = (t) ->
+          if series[0].labelIsUpdatedWithTooltip
+            return that.getTextBBox(t).width + 100
+          return that.getTextBBox(t).width
 
         items = svg.selectAll(".legendItem.#{axis}")
         return [] unless items.length > 0
@@ -107,25 +110,22 @@
                   'r': d/2
                 )
 
-            if s.labelIsVisible == true or s.extraLabelIsVisible == true
-              series.item = item.append('text')
-                .attr(
-                  'class': (d, i) -> "legendText series_#{i}"
-                  'font-family': 'Courier'
-                  'font-size': 10
-                  'transform': 'translate(13, 4)'
-                  'text-rendering': 'geometric-precision'
-                )
-                .text((s) ->
-                  value = ''
-                  if s.labelIsVisible
-                    value = s.label || s.y
+              if s.labelIsVisible == true
+                item.append('text')
+                  .attr(
+                    'class': (d, i) -> "legendText series_#{i}"
+                    'font-family': 'Courier'
+                    'font-size': 10
+                    'transform': 'translate(13, 4)'
+                    'text-rendering': 'geometric-precision'
+                  )
+                  .text((s) ->
+                    value = ''
+                    if s.labelIsVisible
+                      value = s.label || s.y
 
-                  if s.extraLabelIsVisible
-                    value = value + ' ' + s.extraLabel
-
-                  return value
-                )
+                    return value
+                  )
 
         # Translate every legend g node to its position
         translateLegends = () ->
@@ -177,3 +177,13 @@
           )
 
         return isVisible
+
+      updateTextLegendWithTooltip: (svg, index, dataTooltip) ->
+        item1 = svg.select('.legend')
+        item2 = item1.select('.series_' + index)
+        text = item2.select('text')
+        tmpText = ''
+        if item2.data()[0].labelIsVisible
+          tmpText = item2.data()[0].label
+        tmpText = tmpText + ' ' + dataTooltip
+        text.text(tmpText)
