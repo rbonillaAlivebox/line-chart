@@ -1,5 +1,5 @@
 ###
-line-chart - v1.1.10 - 10 July 2015
+line-chart - v1.1.10 - 13 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
 ###
@@ -524,8 +524,8 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
       getLegendItemsWidths: (svg, axis, series) ->
         that = this
         bbox = (t) ->
-          if series[0].labelIsUpdatedWithTooltip
-            return that.getTextBBox(t).width + 100
+          if d3.select(t).data()[0].iconIsVisible is false
+            return that.getTextBBox(t).width - 12
           return that.getTextBBox(t).width
 
         items = svg.selectAll(".legendItem.#{axis}")
@@ -603,22 +603,22 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
                   'r': d/2
                 )
 
-              if s.labelIsVisible == true
-                item.append('text')
-                  .attr(
-                    'class': (d, i) -> "legendText series_#{i}"
-                    'font-family': 'Courier'
-                    'font-size': 10
-                    'transform': 'translate(13, 4)'
-                    'text-rendering': 'geometric-precision'
-                  )
-                  .text((s) ->
-                    value = ''
-                    if s.labelIsVisible
-                      value = s.label || s.y
+            if s.labelIsVisible == true
+              item.append('text')
+                .attr(
+                  'class': (d, i) -> "legendText series_#{i}"
+                  'font-family': 'Courier'
+                  'font-size': 10
+                  'transform': 'translate(13, 4)'
+                  'text-rendering': 'geometric-precision'
+                )
+                .text((s) ->
+                  value = ''
+                  if s.labelIsVisible
+                    value = s.label || s.y
 
-                    return value
-                  )
+                  return value
+                )
 
         # Translate every legend g node to its position
         translateLegends = () ->
@@ -680,6 +680,18 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           tmpText = item2.data()[0].label
         tmpText = tmpText + ' ' + dataTooltip
         text.text(tmpText)
+
+      updateTranslateLegends: (svg, series, dimensions) ->
+        [left, right] = this.computeLegendLayout(svg, series, dimensions)
+        item1 = svg.select('.legend')
+        groups = item1.selectAll('.legendItem')
+        groups.attr(
+          'transform': (s, i) ->
+            if s.axis is 'y'
+              return "translate(#{left.shift()},#{dimensions.height-40})"
+            else
+              return "translate(#{right.shift()},#{dimensions.height-40})"
+        )
 
 # ----
 
@@ -934,7 +946,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           .style('fill', 'white')
           .style('fill-opacity', 0.000001)
           .on('mouseover', ->
-            handlers.onChartHover(svg, d3.select(this), axes, data, options, dispatch, columnWidth)
+            handlers.onChartHover(svg, d3.select(this), axes, data, options, dispatch, columnWidth, dimensions)
           )
 
 
@@ -1635,11 +1647,11 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
 
 
 # src/utils/scrubber.coffee
-      showScrubber: (svg, glass, axes, data, options, dispatch, columnWidth) ->
+      showScrubber: (svg, glass, axes, data, options, dispatch, columnWidth, dimensions) ->
         that = this
         glass.on('mousemove', ->
           svg.selectAll('.glass-container').attr('opacity', 1)
-          that.updateScrubber(svg, d3.mouse(this), axes, data, options, dispatch, columnWidth)
+          that.updateScrubber(svg, d3.mouse(this), axes, data, options, dispatch, columnWidth, dimensions)
         )
         glass.on('mouseout', ->
           glass.on('mousemove', null)
@@ -1666,7 +1678,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
 
         return d
 
-      updateScrubber: (svg, [x, y], axes, data, options, dispatch, columnWidth) ->
+      updateScrubber: (svg, [x, y], axes, data, options, dispatch, columnWidth, dimensions) ->
         ease = (element) -> element.transition().duration(50)
         that = this
         positions = []
@@ -1693,6 +1705,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
 
           if options.series[series.index].labelIsUpdatedWithTooltip
             that.updateTextLegendWithTooltip(svg, index, text)
+            that.updateTranslateLegends(svg, options.series[series.index], dimensions)
 
           if options.tooltip.type is 'complete'
             right = item.select('.rightTT')

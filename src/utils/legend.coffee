@@ -31,8 +31,8 @@
       getLegendItemsWidths: (svg, axis, series) ->
         that = this
         bbox = (t) ->
-          if series[0].labelIsUpdatedWithTooltip
-            return that.getTextBBox(t).width + 100
+          if d3.select(t).data()[0].iconIsVisible is false
+            return that.getTextBBox(t).width - 12
           return that.getTextBBox(t).width
 
         items = svg.selectAll(".legendItem.#{axis}")
@@ -110,22 +110,22 @@
                   'r': d/2
                 )
 
-              if s.labelIsVisible == true
-                item.append('text')
-                  .attr(
-                    'class': (d, i) -> "legendText series_#{i}"
-                    'font-family': 'Courier'
-                    'font-size': 10
-                    'transform': 'translate(13, 4)'
-                    'text-rendering': 'geometric-precision'
-                  )
-                  .text((s) ->
-                    value = ''
-                    if s.labelIsVisible
-                      value = s.label || s.y
+            if s.labelIsVisible == true
+              item.append('text')
+                .attr(
+                  'class': (d, i) -> "legendText series_#{i}"
+                  'font-family': 'Courier'
+                  'font-size': 10
+                  'transform': 'translate(13, 4)'
+                  'text-rendering': 'geometric-precision'
+                )
+                .text((s) ->
+                  value = ''
+                  if s.labelIsVisible
+                    value = s.label || s.y
 
-                    return value
-                  )
+                  return value
+                )
 
         # Translate every legend g node to its position
         translateLegends = () ->
@@ -187,3 +187,15 @@
           tmpText = item2.data()[0].label
         tmpText = tmpText + ' ' + dataTooltip
         text.text(tmpText)
+
+      updateTranslateLegends: (svg, series, dimensions) ->
+        [left, right] = this.computeLegendLayout(svg, series, dimensions)
+        item1 = svg.select('.legend')
+        groups = item1.selectAll('.legendItem')
+        groups.attr(
+          'transform': (s, i) ->
+            if s.axis is 'y'
+              return "translate(#{left.shift()},#{dimensions.height-40})"
+            else
+              return "translate(#{right.shift()},#{dimensions.height-40})"
+        )

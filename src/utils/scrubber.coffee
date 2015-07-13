@@ -1,8 +1,8 @@
-      showScrubber: (svg, glass, axes, data, options, dispatch, columnWidth) ->
+      showScrubber: (svg, glass, axes, data, options, dispatch, columnWidth, dimensions) ->
         that = this
         glass.on('mousemove', ->
           svg.selectAll('.glass-container').attr('opacity', 1)
-          that.updateScrubber(svg, d3.mouse(this), axes, data, options, dispatch, columnWidth)
+          that.updateScrubber(svg, d3.mouse(this), axes, data, options, dispatch, columnWidth, dimensions)
         )
         glass.on('mouseout', ->
           glass.on('mousemove', null)
@@ -29,7 +29,7 @@
 
         return d
 
-      updateScrubber: (svg, [x, y], axes, data, options, dispatch, columnWidth) ->
+      updateScrubber: (svg, [x, y], axes, data, options, dispatch, columnWidth, dimensions) ->
         ease = (element) -> element.transition().duration(50)
         that = this
         positions = []
@@ -56,6 +56,7 @@
 
           if options.series[series.index].labelIsUpdatedWithTooltip
             that.updateTextLegendWithTooltip(svg, index, text)
+            that.updateTranslateLegends(svg, options.series[series.index], dimensions)
 
           if options.tooltip.type is 'complete'
             right = item.select('.rightTT')

@@ -1,6 +1,6 @@
 
 /*
-line-chart - v1.1.10 - 10 July 2015
+line-chart - v1.1.10 - 13 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
  */
@@ -553,8 +553,8 @@ mod.factory('n3utils', [
         var bbox, i, items, that, widths;
         that = this;
         bbox = function(t) {
-          if (series[0].labelIsUpdatedWithTooltip) {
-            return that.getTextBBox(t).width + 100;
+          if (d3.select(t).data()[0].iconIsVisible === false) {
+            return that.getTextBBox(t).width - 12;
           }
           return that.getTextBBox(t).width;
         };
@@ -625,24 +625,24 @@ mod.factory('n3utils', [
               'stroke-width': '2px',
               'r': d / 2
             });
-            if (s.labelIsVisible === true) {
-              return item.append('text').attr({
-                'class': function(d, i) {
-                  return "legendText series_" + i;
-                },
-                'font-family': 'Courier',
-                'font-size': 10,
-                'transform': 'translate(13, 4)',
-                'text-rendering': 'geometric-precision'
-              }).text(function(s) {
-                var value;
-                value = '';
-                if (s.labelIsVisible) {
-                  value = s.label || s.y;
-                }
-                return value;
-              });
-            }
+          }
+          if (s.labelIsVisible === true) {
+            return item.append('text').attr({
+              'class': function(d, i) {
+                return "legendText series_" + i;
+              },
+              'font-family': 'Courier',
+              'font-size': 10,
+              'transform': 'translate(13, 4)',
+              'text-rendering': 'geometric-precision'
+            }).text(function(s) {
+              var value;
+              value = '';
+              if (s.labelIsVisible) {
+                value = s.label || s.y;
+              }
+              return value;
+            });
           }
         });
         translateLegends = function() {
@@ -701,6 +701,21 @@ mod.factory('n3utils', [
         }
         tmpText = tmpText + ' ' + dataTooltip;
         return text.text(tmpText);
+      },
+      updateTranslateLegends: function(svg, series, dimensions) {
+        var groups, item1, left, right, _ref;
+        _ref = this.computeLegendLayout(svg, series, dimensions), left = _ref[0], right = _ref[1];
+        item1 = svg.select('.legend');
+        groups = item1.selectAll('.legendItem');
+        return groups.attr({
+          'transform': function(s, i) {
+            if (s.axis === 'y') {
+              return "translate(" + (left.shift()) + "," + (dimensions.height - 40) + ")";
+            } else {
+              return "translate(" + (right.shift()) + "," + (dimensions.height - 40) + ")";
+            }
+          }
+        });
       },
       drawLines: function(svg, scales, data, options, handlers) {
         var drawers, interpolateData, lineGroup;
@@ -935,7 +950,7 @@ mod.factory('n3utils', [
           width: dimensions.width - dimensions.left - dimensions.right,
           height: dimensions.height - dimensions.top - dimensions.bottom
         }).style('fill', 'white').style('fill-opacity', 0.000001).on('mouseover', function() {
-          return handlers.onChartHover(svg, d3.select(this), axes, data, options, dispatch, columnWidth);
+          return handlers.onChartHover(svg, d3.select(this), axes, data, options, dispatch, columnWidth, dimensions);
         });
       },
       getDataPerSeries: function(data, options) {
@@ -1698,12 +1713,12 @@ mod.factory('n3utils', [
           return s.axis !== 'y2';
         });
       },
-      showScrubber: function(svg, glass, axes, data, options, dispatch, columnWidth) {
+      showScrubber: function(svg, glass, axes, data, options, dispatch, columnWidth, dimensions) {
         var that;
         that = this;
         glass.on('mousemove', function() {
           svg.selectAll('.glass-container').attr('opacity', 1);
-          return that.updateScrubber(svg, d3.mouse(this), axes, data, options, dispatch, columnWidth);
+          return that.updateScrubber(svg, d3.mouse(this), axes, data, options, dispatch, columnWidth, dimensions);
         });
         return glass.on('mouseout', function() {
           glass.on('mousemove', null);
@@ -1727,7 +1742,7 @@ mod.factory('n3utils', [
         d = xValue - d0.x > d1.x - xValue ? d1 : d0;
         return d;
       },
-      updateScrubber: function(svg, _arg, axes, data, options, dispatch, columnWidth) {
+      updateScrubber: function(svg, _arg, axes, data, options, dispatch, columnWidth, dimensions) {
         var ease, positions, that, tickLength, x, y;
         x = _arg[0], y = _arg[1];
         ease = function(element) {
@@ -1753,6 +1768,7 @@ mod.factory('n3utils', [
           }
           if (options.series[series.index].labelIsUpdatedWithTooltip) {
             that.updateTextLegendWithTooltip(svg, index, text);
+            that.updateTranslateLegends(svg, options.series[series.index], dimensions);
           }
           if (options.tooltip.type === 'complete') {
             right = item.select('.rightTT');
