@@ -993,26 +993,17 @@ mod.factory('n3utils', [
             return row[s.y] != null;
           }).forEach(function(row) {
             var d;
-            if (s.type === 'candlestick' || s.type === 'ohlc') {
-              d = {
-                x: row[options.axes.x.key],
-                y: row[s.y],
-                y0: 0,
-                axis: s.axis || 'y',
-                date: row.dateValue,
-                close: row.closeValue,
-                open: row.openValue,
-                high: row.highValue,
-                low: row.lowValue
-              };
-            } else {
-              d = {
-                x: row[options.axes.x.key],
-                y: row[s.y],
-                y0: 0,
-                axis: s.axis || 'y'
-              };
-            }
+            d = {
+              x: row[options.axes.x.key],
+              y: row[s.y],
+              y0: 0,
+              axis: s.axis || 'y',
+              date: row.dateValue || 0,
+              close: row.closeValue || 0,
+              open: row.openValue || 0,
+              high: row.highValue || 0,
+              low: row.lowValue || 0
+            };
             if (s.dotSize != null) {
               d.dotSize = s.dotSize;
             }
@@ -1774,7 +1765,7 @@ mod.factory('n3utils', [
         that = this;
         positions = [];
         data.forEach(function(series, index) {
-          var color, item, lText, left, rText, right, side, sizes, text, v, xInvert, xPos, yInvert;
+          var color, item, lText, left, position, rText, right, serieData, side, sizes, text, v, xInvert, xPos, yInvert;
           item = svg.select(".scrubberItem.series_" + index);
           if (options.series[index].visible === false) {
             item.attr('opacity', 0);
@@ -1786,8 +1777,10 @@ mod.factory('n3utils', [
           v = that.getClosestPoint(series.values, xInvert);
           dispatch.focus(v, series.values.indexOf(v), [xInvert, yInvert]);
           text = v.x + ' : ' + v.y;
+          position = series.values.indexOf(v);
+          serieData = series.values[position];
           if (options.tooltip.formatter) {
-            text = options.tooltip.formatter(v.x, v.y, options.series[index]);
+            text = options.tooltip.formatter(v.x, v.y, options.series[index], serieData);
           }
           if (options.series[series.index].labelIsUpdatedWithTooltip) {
             that.updateTextLegendWithTooltip(svg, index, text);

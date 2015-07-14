@@ -985,23 +985,16 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
             seriesData.id = s.id
 
           data.filter((row) -> row[s.y]?).forEach (row) ->
-            if s.type == 'candlestick' or s.type == 'ohlc'
-              d =
-                x: row[options.axes.x.key]
-                y: row[s.y]
-                y0: 0
-                axis: s.axis || 'y'
-                date: row.dateValue
-                close: row.closeValue
-                open: row.openValue
-                high: row.highValue
-                low: row.lowValue
-            else
-              d =
-                x: row[options.axes.x.key]
-                y: row[s.y]
-                y0: 0
-                axis: s.axis || 'y'
+            d =
+              x: row[options.axes.x.key]
+              y: row[s.y]
+              y0: 0
+              axis: s.axis || 'y'
+              date: row.dateValue || 0
+              close: row.closeValue || 0
+              open: row.openValue || 0
+              high: row.highValue || 0
+              low: row.lowValue || 0
 
             d.dotSize = s.dotSize if s.dotSize?
             seriesData.values.push(d)
@@ -1735,12 +1728,12 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           yInvert = axes.yScale.invert(y)
 
           v = that.getClosestPoint(series.values, xInvert)
-
           dispatch.focus(v, series.values.indexOf(v), [xInvert, yInvert])
-
           text = v.x + ' : ' + v.y
+          position = series.values.indexOf(v)
+          serieData = series.values[position]
           if options.tooltip.formatter
-            text = options.tooltip.formatter(v.x, v.y, options.series[index])
+            text = options.tooltip.formatter(v.x, v.y, options.series[index], serieData)
 
           if options.series[series.index].labelIsUpdatedWithTooltip
             that.updateTextLegendWithTooltip(svg, index, text)
