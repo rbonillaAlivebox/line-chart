@@ -56,6 +56,7 @@ directive('linechart', ['n3utils', '$window', '$timeout', (n3utils, $window, $ti
       if dataPerSeries.length
         _u.setScalesDomain(axes, scope.data, options.series, svg, options)
 
+      _u.drawGridAxes(svg, dimensions, options.axes, axes)
       _u.createContent(svg, id, options, handlers)
 
       if dataPerSeries.length
@@ -1156,7 +1157,11 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           margin: this.getDefaultMargins()
           axes: {
             x: {type: 'linear', key: 'x'}
-            y: {type: 'linear'}
+            y: {type: 'linear'},
+            isGridVisible: false,
+            isHorizontalLinesVisible: false,
+            isVerticalLinesVisible: false
+
           }
           series: [
             labelIsClickable: true,
@@ -1306,6 +1311,10 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
 
         axesOptions.y = this.sanitizeAxisOptions(axesOptions.y)
         axesOptions.y2 = this.sanitizeAxisOptions(axesOptions.y2) if secondAxis
+
+        axesOptions.isGridVisible = if axesOptions.isGridVisible in [true, false] then axesOptions.isGridVisible else false
+        axesOptions.isHorizontalLinesVisible = if axesOptions.isHorizontalLinesVisible in [true, false] then axesOptions.isHorizontalLinesVisible else false
+        axesOptions.isVerticalLinesVisible = if axesOptions.isVerticalLinesVisible in [true, false] then axesOptions.isVerticalLinesVisible else false
 
         return axesOptions
 
@@ -1642,6 +1651,32 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
 
       haveSecondYAxis: (series) ->
         return !series.every (s) -> s.axis isnt 'y2'
+
+      drawGridAxes: (svg, dimensions, axesOptions, axes) ->
+        if axesOptions.isGridVisible is false
+          return
+
+        if axesOptions.isHorizontalLinesVisible is true
+          svg.selectAll("line.y")
+            .data(axes['y2Scale'].ticks())
+            .enter().append("svg:line")
+            .attr("class", "y")
+            .attr("x1", 0)
+            .attr("x2", dimensions.width - 100)
+            .attr("y1", axes['y2Scale'])
+            .attr("y2", axes['y2Scale'])
+            .attr("stroke", "#ccc")
+
+        if axesOptions.isHorizontalLinesVisible is true
+          svg.selectAll("line.x")
+            .data(axes['xScale'].ticks())
+            .enter().append("svg:line")
+            .attr("class", "x")
+            .attr("x1", axes['xScale'])
+            .attr("x2", axes['xScale'])
+            .attr("y1", 0)
+            .attr("y2", dimensions.height - 75)
+            .attr("stroke", "#ccc")
 
 # ----
 

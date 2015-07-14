@@ -257,3 +257,29 @@
 
       haveSecondYAxis: (series) ->
         return !series.every (s) -> s.axis isnt 'y2'
+
+      drawGridAxes: (svg, dimensions, axesOptions, axes) ->
+        if axesOptions.isGridVisible is false
+          return
+
+        if axesOptions.isHorizontalLinesVisible is true
+          svg.selectAll("line.y")
+            .data(axes['y2Scale'].ticks())
+            .enter().append("svg:line")
+            .attr("class", "y")
+            .attr("x1", 0)
+            .attr("x2", dimensions.width - 100)
+            .attr("y1", axes['y2Scale'])
+            .attr("y2", axes['y2Scale'])
+            .attr("stroke", "#ccc")
+
+        if axesOptions.isHorizontalLinesVisible is true
+          svg.selectAll("line.x")
+            .data(axes['xScale'].ticks())
+            .enter().append("svg:line")
+            .attr("class", "x")
+            .attr("x1", axes['xScale'])
+            .attr("x2", axes['xScale'])
+            .attr("y1", 0)
+            .attr("y2", dimensions.height - 75)
+            .attr("stroke", "#ccc")

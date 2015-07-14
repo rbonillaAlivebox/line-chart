@@ -60,6 +60,7 @@ directive('linechart', [
         if (dataPerSeries.length) {
           _u.setScalesDomain(axes, scope.data, options.series, svg, options);
         }
+        _u.drawGridAxes(svg, dimensions, options.axes, axes);
         _u.createContent(svg, id, options, handlers);
         if (dataPerSeries.length) {
           columnWidth = _u.getBestColumnWidth(axes, dimensions, dataPerSeries, options);
@@ -1207,7 +1208,10 @@ mod.factory('n3utils', [
             },
             y: {
               type: 'linear'
-            }
+            },
+            isGridVisible: false,
+            isHorizontalLinesVisible: false,
+            isVerticalLinesVisible: false
           },
           series: [
             {
@@ -1373,7 +1377,7 @@ mod.factory('n3utils', [
         return options;
       },
       sanitizeAxes: function(axesOptions, secondAxis) {
-        var _base;
+        var _base, _ref, _ref1, _ref2;
         if (axesOptions == null) {
           axesOptions = {};
         }
@@ -1383,6 +1387,9 @@ mod.factory('n3utils', [
         if (secondAxis) {
           axesOptions.y2 = this.sanitizeAxisOptions(axesOptions.y2);
         }
+        axesOptions.isGridVisible = (_ref = axesOptions.isGridVisible) === true || _ref === false ? axesOptions.isGridVisible : false;
+        axesOptions.isHorizontalLinesVisible = (_ref1 = axesOptions.isHorizontalLinesVisible) === true || _ref1 === false ? axesOptions.isHorizontalLinesVisible : false;
+        axesOptions.isVerticalLinesVisible = (_ref2 = axesOptions.isVerticalLinesVisible) === true || _ref2 === false ? axesOptions.isVerticalLinesVisible : false;
         return axesOptions;
       },
       sanitizeExtrema: function(options) {
@@ -1712,6 +1719,17 @@ mod.factory('n3utils', [
         return !series.every(function(s) {
           return s.axis !== 'y2';
         });
+      },
+      drawGridAxes: function(svg, dimensions, axesOptions, axes) {
+        if (axesOptions.isGridVisible === false) {
+          return;
+        }
+        if (axesOptions.isHorizontalLinesVisible === true) {
+          svg.selectAll("line.y").data(axes['y2Scale'].ticks()).enter().append("svg:line").attr("class", "y").attr("x1", 0).attr("x2", dimensions.width - 100).attr("y1", axes['y2Scale']).attr("y2", axes['y2Scale']).attr("stroke", "#ccc");
+        }
+        if (axesOptions.isHorizontalLinesVisible === true) {
+          return svg.selectAll("line.x").data(axes['xScale'].ticks()).enter().append("svg:line").attr("class", "x").attr("x1", axes['xScale']).attr("x2", axes['xScale']).attr("y1", 0).attr("y2", dimensions.height - 75).attr("stroke", "#ccc");
+        }
       },
       showScrubber: function(svg, glass, axes, data, options, dispatch, columnWidth, dimensions) {
         var that;

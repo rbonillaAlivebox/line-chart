@@ -50,6 +50,7 @@ directive('linechart', ['n3utils', '$window', '$timeout', (n3utils, $window, $ti
       if dataPerSeries.length
         _u.setScalesDomain(axes, scope.data, options.series, svg, options)
 
+      _u.drawGridAxes(svg, dimensions, options.axes, axes)
       _u.createContent(svg, id, options, handlers)
 
       if dataPerSeries.length
