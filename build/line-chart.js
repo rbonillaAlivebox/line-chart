@@ -1,6 +1,6 @@
 
 /*
-line-chart - v1.1.10 - 13 July 2015
+line-chart - v1.1.10 - 14 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
  */
@@ -1209,9 +1209,8 @@ mod.factory('n3utils', [
             y: {
               type: 'linear'
             },
-            isGridVisible: false,
-            isHorizontalLinesVisible: false,
-            isVerticalLinesVisible: false
+            isGridHorizontalLinesVisible: false,
+            isGridVerticalLinesVisible: false
           },
           series: [
             {
@@ -1377,7 +1376,7 @@ mod.factory('n3utils', [
         return options;
       },
       sanitizeAxes: function(axesOptions, secondAxis) {
-        var _base, _ref, _ref1, _ref2;
+        var _base, _ref, _ref1;
         if (axesOptions == null) {
           axesOptions = {};
         }
@@ -1387,9 +1386,8 @@ mod.factory('n3utils', [
         if (secondAxis) {
           axesOptions.y2 = this.sanitizeAxisOptions(axesOptions.y2);
         }
-        axesOptions.isGridVisible = (_ref = axesOptions.isGridVisible) === true || _ref === false ? axesOptions.isGridVisible : false;
-        axesOptions.isHorizontalLinesVisible = (_ref1 = axesOptions.isHorizontalLinesVisible) === true || _ref1 === false ? axesOptions.isHorizontalLinesVisible : false;
-        axesOptions.isVerticalLinesVisible = (_ref2 = axesOptions.isVerticalLinesVisible) === true || _ref2 === false ? axesOptions.isVerticalLinesVisible : false;
+        axesOptions.isGridHorizontalLinesVisible = (_ref = axesOptions.isGridHorizontalLinesVisible) === true || _ref === false ? axesOptions.isGridHorizontalLinesVisible : false;
+        axesOptions.isGridVerticalLinesVisible = (_ref1 = axesOptions.isGridVerticalLinesVisible) === true || _ref1 === false ? axesOptions.isGridVerticalLinesVisible : false;
         return axesOptions;
       },
       sanitizeExtrema: function(options) {
@@ -1721,14 +1719,16 @@ mod.factory('n3utils', [
         });
       },
       drawGridAxes: function(svg, dimensions, axesOptions, axes) {
-        if (axesOptions.isGridVisible === false) {
-          return;
+        var height, width;
+        width = dimensions.width;
+        height = dimensions.height;
+        width = width - dimensions.left - dimensions.right;
+        height = height - dimensions.top - dimensions.bottom;
+        if (axesOptions.isGridHorizontalLinesVisible === true) {
+          svg.selectAll("line.y").data(axes['y2Scale'].ticks()).enter().append("svg:line").attr("class", "y").attr("x1", 0).attr("x2", width).attr("y1", axes['y2Scale']).attr("y2", axes['y2Scale']).attr("stroke", "#ccc");
         }
-        if (axesOptions.isHorizontalLinesVisible === true) {
-          svg.selectAll("line.y").data(axes['y2Scale'].ticks()).enter().append("svg:line").attr("class", "y").attr("x1", 0).attr("x2", dimensions.width - 100).attr("y1", axes['y2Scale']).attr("y2", axes['y2Scale']).attr("stroke", "#ccc");
-        }
-        if (axesOptions.isHorizontalLinesVisible === true) {
-          return svg.selectAll("line.x").data(axes['xScale'].ticks()).enter().append("svg:line").attr("class", "x").attr("x1", axes['xScale']).attr("x2", axes['xScale']).attr("y1", 0).attr("y2", dimensions.height - 75).attr("stroke", "#ccc");
+        if (axesOptions.isGridVerticalLinesVisible === true) {
+          return svg.selectAll("line.x").data(axes['xScale'].ticks()).enter().append("svg:line").attr("class", "x").attr("x1", axes['xScale']).attr("x2", axes['xScale']).attr("y1", 0).attr("y2", height).attr("stroke", "#ccc");
         }
       },
       showScrubber: function(svg, glass, axes, data, options, dispatch, columnWidth, dimensions) {

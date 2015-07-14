@@ -259,21 +259,23 @@
         return !series.every (s) -> s.axis isnt 'y2'
 
       drawGridAxes: (svg, dimensions, axesOptions, axes) ->
-        if axesOptions.isGridVisible is false
-          return
+        width = dimensions.width
+        height = dimensions.height
 
-        if axesOptions.isHorizontalLinesVisible is true
+        width = width - dimensions.left - dimensions.right
+        height = height - dimensions.top - dimensions.bottom
+        if axesOptions.isGridHorizontalLinesVisible is true
           svg.selectAll("line.y")
             .data(axes['y2Scale'].ticks())
             .enter().append("svg:line")
             .attr("class", "y")
             .attr("x1", 0)
-            .attr("x2", dimensions.width - 100)
+            .attr("x2", width)
             .attr("y1", axes['y2Scale'])
             .attr("y2", axes['y2Scale'])
             .attr("stroke", "#ccc")
 
-        if axesOptions.isHorizontalLinesVisible is true
+        if axesOptions.isGridVerticalLinesVisible is true
           svg.selectAll("line.x")
             .data(axes['xScale'].ticks())
             .enter().append("svg:line")
@@ -281,5 +283,5 @@
             .attr("x1", axes['xScale'])
             .attr("x2", axes['xScale'])
             .attr("y1", 0)
-            .attr("y2", dimensions.height - 75)
+            .attr("y2", height)
             .attr("stroke", "#ccc")
