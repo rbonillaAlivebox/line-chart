@@ -525,8 +525,6 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
       getLegendItemsWidths: (svg, axis, series) ->
         that = this
         bbox = (t) ->
-          if d3.select(t).data()[0].iconIsVisible is false
-            return that.getTextBBox(t).width - 12
           return that.getTextBBox(t).width
 
         items = svg.selectAll(".legendItem.#{axis}")
@@ -610,7 +608,11 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
                   'class': (d, i) -> "legendText series_#{i}"
                   'font-family': 'Courier'
                   'font-size': 10
-                  'transform': 'translate(13, 4)'
+                  'transform': (s) ->
+                    if s.iconIsVisible is true
+                      return 'translate(13, 4)'
+                    else
+                      return 'translate(-10, 4)'
                   'text-rendering': 'geometric-precision'
                 )
                 .text((s) ->
@@ -1632,8 +1634,10 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         step = this.getAverageStep(data, field)
 
         if angular.isDate(domain[0])
+          domain[0] = new Date(domain[0].getTime() - step)
           domain[1] = new Date(domain[1].getTime() + step)
         else
+          domain[0] = domain[0] - step
           domain[1] = domain[1] + step
 
       getAverageStep: (data, field) ->

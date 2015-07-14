@@ -554,9 +554,6 @@ mod.factory('n3utils', [
         var bbox, i, items, that, widths;
         that = this;
         bbox = function(t) {
-          if (d3.select(t).data()[0].iconIsVisible === false) {
-            return that.getTextBBox(t).width - 12;
-          }
           return that.getTextBBox(t).width;
         };
         items = svg.selectAll(".legendItem." + axis);
@@ -634,7 +631,13 @@ mod.factory('n3utils', [
               },
               'font-family': 'Courier',
               'font-size': 10,
-              'transform': 'translate(13, 4)',
+              'transform': function(s) {
+                if (s.iconIsVisible === true) {
+                  return 'translate(13, 4)';
+                } else {
+                  return 'translate(-10, 4)';
+                }
+              },
               'text-rendering': 'geometric-precision'
             }).text(function(s) {
               var value;
@@ -1694,8 +1697,10 @@ mod.factory('n3utils', [
         var step;
         step = this.getAverageStep(data, field);
         if (angular.isDate(domain[0])) {
+          domain[0] = new Date(domain[0].getTime() - step);
           return domain[1] = new Date(domain[1].getTime() + step);
         } else {
+          domain[0] = domain[0] - step;
           return domain[1] = domain[1] + step;
         }
       },

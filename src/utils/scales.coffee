@@ -240,8 +240,10 @@
         step = this.getAverageStep(data, field)
 
         if angular.isDate(domain[0])
+          domain[0] = new Date(domain[0].getTime() - step)
           domain[1] = new Date(domain[1].getTime() + step)
         else
+          domain[0] = domain[0] - step
           domain[1] = domain[1] + step
 
       getAverageStep: (data, field) ->
