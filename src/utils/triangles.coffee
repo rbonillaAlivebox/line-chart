@@ -1,0 +1,2 @@
+    drawTriangles: () ->
+      return this
