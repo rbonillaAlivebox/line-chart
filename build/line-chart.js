@@ -1,6 +1,6 @@
 
 /*
-line-chart - v1.1.10 - 13 July 2015
+line-chart - v1.1.10 - 14 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
  */
@@ -554,9 +554,6 @@ mod.factory('n3utils', [
         var bbox, i, items, that, widths;
         that = this;
         bbox = function(t) {
-          if (d3.select(t).data()[0].iconIsVisible === false) {
-            return that.getTextBBox(t).width - 12;
-          }
           return that.getTextBBox(t).width;
         };
         items = svg.selectAll(".legendItem." + axis);
@@ -634,7 +631,13 @@ mod.factory('n3utils', [
               },
               'font-family': 'Courier',
               'font-size': 10,
-              'transform': 'translate(13, 4)',
+              'transform': function(s) {
+                if (s.iconIsVisible === true) {
+                  return 'translate(13, 4)';
+                } else {
+                  return 'translate(-10, 4)';
+                }
+              },
               'text-rendering': 'geometric-precision'
             }).text(function(s) {
               var value;
@@ -990,26 +993,17 @@ mod.factory('n3utils', [
             return row[s.y] != null;
           }).forEach(function(row) {
             var d;
-            if (s.type === 'candlestick' || s.type === 'ohlc') {
-              d = {
-                x: row[options.axes.x.key],
-                y: row[s.y],
-                y0: 0,
-                axis: s.axis || 'y',
-                date: row.dateValue,
-                close: row.closeValue,
-                open: row.openValue,
-                high: row.highValue,
-                low: row.lowValue
-              };
-            } else {
-              d = {
-                x: row[options.axes.x.key],
-                y: row[s.y],
-                y0: 0,
-                axis: s.axis || 'y'
-              };
-            }
+            d = {
+              x: row[options.axes.x.key],
+              y: row[s.y],
+              y0: 0,
+              axis: s.axis || 'y',
+              date: row.dateValue || 0,
+              close: row.closeValue || 0,
+              open: row.openValue || 0,
+              high: row.highValue || 0,
+              low: row.lowValue || 0
+            };
             if (s.dotSize != null) {
               d.dotSize = s.dotSize;
             }
@@ -1209,9 +1203,8 @@ mod.factory('n3utils', [
             y: {
               type: 'linear'
             },
-            isGridVisible: false,
-            isHorizontalLinesVisible: false,
-            isVerticalLinesVisible: false
+            isGridHorizontalLinesVisible: false,
+            isGridVerticalLinesVisible: false
           },
           series: [
             {
@@ -1377,7 +1370,7 @@ mod.factory('n3utils', [
         return options;
       },
       sanitizeAxes: function(axesOptions, secondAxis) {
-        var _base, _ref, _ref1, _ref2;
+        var _base, _ref, _ref1;
         if (axesOptions == null) {
           axesOptions = {};
         }
@@ -1387,9 +1380,8 @@ mod.factory('n3utils', [
         if (secondAxis) {
           axesOptions.y2 = this.sanitizeAxisOptions(axesOptions.y2);
         }
-        axesOptions.isGridVisible = (_ref = axesOptions.isGridVisible) === true || _ref === false ? axesOptions.isGridVisible : false;
-        axesOptions.isHorizontalLinesVisible = (_ref1 = axesOptions.isHorizontalLinesVisible) === true || _ref1 === false ? axesOptions.isHorizontalLinesVisible : false;
-        axesOptions.isVerticalLinesVisible = (_ref2 = axesOptions.isVerticalLinesVisible) === true || _ref2 === false ? axesOptions.isVerticalLinesVisible : false;
+        axesOptions.isGridHorizontalLinesVisible = (_ref = axesOptions.isGridHorizontalLinesVisible) === true || _ref === false ? axesOptions.isGridHorizontalLinesVisible : false;
+        axesOptions.isGridVerticalLinesVisible = (_ref1 = axesOptions.isGridVerticalLinesVisible) === true || _ref1 === false ? axesOptions.isGridVerticalLinesVisible : false;
         return axesOptions;
       },
       sanitizeExtrema: function(options) {
@@ -1696,8 +1688,10 @@ mod.factory('n3utils', [
         var step;
         step = this.getAverageStep(data, field);
         if (angular.isDate(domain[0])) {
+          domain[0] = new Date(domain[0].getTime() - step);
           return domain[1] = new Date(domain[1].getTime() + step);
         } else {
+          domain[0] = domain[0] - step;
           return domain[1] = domain[1] + step;
         }
       },
@@ -1721,14 +1715,16 @@ mod.factory('n3utils', [
         });
       },
       drawGridAxes: function(svg, dimensions, axesOptions, axes) {
-        if (axesOptions.isGridVisible === false) {
-          return;
+        var height, width;
+        width = dimensions.width;
+        height = dimensions.height;
+        width = width - dimensions.left - dimensions.right;
+        height = height - dimensions.top - dimensions.bottom;
+        if (axesOptions.isGridHorizontalLinesVisible === true) {
+          svg.selectAll("line.y").data(axes['y2Scale'].ticks()).enter().append("svg:line").attr("class", "y").attr("x1", 0).attr("x2", width).attr("y1", axes['y2Scale']).attr("y2", axes['y2Scale']).attr("stroke", "#ccc");
         }
-        if (axesOptions.isHorizontalLinesVisible === true) {
-          svg.selectAll("line.y").data(axes['y2Scale'].ticks()).enter().append("svg:line").attr("class", "y").attr("x1", 0).attr("x2", dimensions.width - 100).attr("y1", axes['y2Scale']).attr("y2", axes['y2Scale']).attr("stroke", "#ccc");
-        }
-        if (axesOptions.isHorizontalLinesVisible === true) {
-          return svg.selectAll("line.x").data(axes['xScale'].ticks()).enter().append("svg:line").attr("class", "x").attr("x1", axes['xScale']).attr("x2", axes['xScale']).attr("y1", 0).attr("y2", dimensions.height - 75).attr("stroke", "#ccc");
+        if (axesOptions.isGridVerticalLinesVisible === true) {
+          return svg.selectAll("line.x").data(axes['xScale'].ticks()).enter().append("svg:line").attr("class", "x").attr("x1", axes['xScale']).attr("x2", axes['xScale']).attr("y1", 0).attr("y2", height).attr("stroke", "#ccc");
         }
       },
       showScrubber: function(svg, glass, axes, data, options, dispatch, columnWidth, dimensions) {
@@ -1769,7 +1765,7 @@ mod.factory('n3utils', [
         that = this;
         positions = [];
         data.forEach(function(series, index) {
-          var color, item, lText, left, rText, right, side, sizes, text, v, xInvert, xPos, yInvert;
+          var color, item, lText, left, position, rText, right, serieData, side, sizes, text, v, xInvert, xPos, yInvert;
           item = svg.select(".scrubberItem.series_" + index);
           if (options.series[index].visible === false) {
             item.attr('opacity', 0);
@@ -1781,8 +1777,10 @@ mod.factory('n3utils', [
           v = that.getClosestPoint(series.values, xInvert);
           dispatch.focus(v, series.values.indexOf(v), [xInvert, yInvert]);
           text = v.x + ' : ' + v.y;
+          position = series.values.indexOf(v);
+          serieData = series.values[position];
           if (options.tooltip.formatter) {
-            text = options.tooltip.formatter(v.x, v.y, options.series[index]);
+            text = options.tooltip.formatter(v.x, v.y, options.series[index], serieData);
           }
           if (options.series[series.index].labelIsUpdatedWithTooltip) {
             that.updateTextLegendWithTooltip(svg, index, text);

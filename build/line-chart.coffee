@@ -1,5 +1,5 @@
 ###
-line-chart - v1.1.10 - 13 July 2015
+line-chart - v1.1.10 - 14 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
 ###
@@ -525,8 +525,6 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
       getLegendItemsWidths: (svg, axis, series) ->
         that = this
         bbox = (t) ->
-          if d3.select(t).data()[0].iconIsVisible is false
-            return that.getTextBBox(t).width - 12
           return that.getTextBBox(t).width
 
         items = svg.selectAll(".legendItem.#{axis}")
@@ -610,7 +608,11 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
                   'class': (d, i) -> "legendText series_#{i}"
                   'font-family': 'Courier'
                   'font-size': 10
-                  'transform': 'translate(13, 4)'
+                  'transform': (s) ->
+                    if s.iconIsVisible is true
+                      return 'translate(13, 4)'
+                    else
+                      return 'translate(-10, 4)'
                   'text-rendering': 'geometric-precision'
                 )
                 .text((s) ->
@@ -983,23 +985,16 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
             seriesData.id = s.id
 
           data.filter((row) -> row[s.y]?).forEach (row) ->
-            if s.type == 'candlestick' or s.type == 'ohlc'
-              d =
-                x: row[options.axes.x.key]
-                y: row[s.y]
-                y0: 0
-                axis: s.axis || 'y'
-                date: row.dateValue
-                close: row.closeValue
-                open: row.openValue
-                high: row.highValue
-                low: row.lowValue
-            else
-              d =
-                x: row[options.axes.x.key]
-                y: row[s.y]
-                y0: 0
-                axis: s.axis || 'y'
+            d =
+              x: row[options.axes.x.key]
+              y: row[s.y]
+              y0: 0
+              axis: s.axis || 'y'
+              date: row.dateValue || 0
+              close: row.closeValue || 0
+              open: row.openValue || 0
+              high: row.highValue || 0
+              low: row.lowValue || 0
 
             d.dotSize = s.dotSize if s.dotSize?
             seriesData.values.push(d)
@@ -1158,9 +1153,8 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           axes: {
             x: {type: 'linear', key: 'x'}
             y: {type: 'linear'},
-            isGridVisible: false,
-            isHorizontalLinesVisible: false,
-            isVerticalLinesVisible: false
+            isGridHorizontalLinesVisible: false,
+            isGridVerticalLinesVisible: false
 
           }
           series: [
@@ -1312,9 +1306,8 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         axesOptions.y = this.sanitizeAxisOptions(axesOptions.y)
         axesOptions.y2 = this.sanitizeAxisOptions(axesOptions.y2) if secondAxis
 
-        axesOptions.isGridVisible = if axesOptions.isGridVisible in [true, false] then axesOptions.isGridVisible else false
-        axesOptions.isHorizontalLinesVisible = if axesOptions.isHorizontalLinesVisible in [true, false] then axesOptions.isHorizontalLinesVisible else false
-        axesOptions.isVerticalLinesVisible = if axesOptions.isVerticalLinesVisible in [true, false] then axesOptions.isVerticalLinesVisible else false
+        axesOptions.isGridHorizontalLinesVisible = if axesOptions.isGridHorizontalLinesVisible in [true, false] then axesOptions.isGridHorizontalLinesVisible else false
+        axesOptions.isGridVerticalLinesVisible = if axesOptions.isGridVerticalLinesVisible in [true, false] then axesOptions.isGridVerticalLinesVisible else false
 
         return axesOptions
 
@@ -1634,8 +1627,10 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         step = this.getAverageStep(data, field)
 
         if angular.isDate(domain[0])
+          domain[0] = new Date(domain[0].getTime() - step)
           domain[1] = new Date(domain[1].getTime() + step)
         else
+          domain[0] = domain[0] - step
           domain[1] = domain[1] + step
 
       getAverageStep: (data, field) ->
@@ -1653,21 +1648,23 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         return !series.every (s) -> s.axis isnt 'y2'
 
       drawGridAxes: (svg, dimensions, axesOptions, axes) ->
-        if axesOptions.isGridVisible is false
-          return
+        width = dimensions.width
+        height = dimensions.height
 
-        if axesOptions.isHorizontalLinesVisible is true
+        width = width - dimensions.left - dimensions.right
+        height = height - dimensions.top - dimensions.bottom
+        if axesOptions.isGridHorizontalLinesVisible is true
           svg.selectAll("line.y")
             .data(axes['y2Scale'].ticks())
             .enter().append("svg:line")
             .attr("class", "y")
             .attr("x1", 0)
-            .attr("x2", dimensions.width - 100)
+            .attr("x2", width)
             .attr("y1", axes['y2Scale'])
             .attr("y2", axes['y2Scale'])
             .attr("stroke", "#ccc")
 
-        if axesOptions.isHorizontalLinesVisible is true
+        if axesOptions.isGridVerticalLinesVisible is true
           svg.selectAll("line.x")
             .data(axes['xScale'].ticks())
             .enter().append("svg:line")
@@ -1675,7 +1672,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
             .attr("x1", axes['xScale'])
             .attr("x2", axes['xScale'])
             .attr("y1", 0)
-            .attr("y2", dimensions.height - 75)
+            .attr("y2", height)
             .attr("stroke", "#ccc")
 
 # ----
@@ -1731,12 +1728,12 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           yInvert = axes.yScale.invert(y)
 
           v = that.getClosestPoint(series.values, xInvert)
-
           dispatch.focus(v, series.values.indexOf(v), [xInvert, yInvert])
-
           text = v.x + ' : ' + v.y
+          position = series.values.indexOf(v)
+          serieData = series.values[position]
           if options.tooltip.formatter
-            text = options.tooltip.formatter(v.x, v.y, options.series[index])
+            text = options.tooltip.formatter(v.x, v.y, options.series[index], serieData)
 
           if options.series[series.index].labelIsUpdatedWithTooltip
             that.updateTextLegendWithTooltip(svg, index, text)

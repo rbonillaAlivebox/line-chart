@@ -7,9 +7,8 @@
           axes: {
             x: {type: 'linear', key: 'x'}
             y: {type: 'linear'},
-            isGridVisible: false,
-            isHorizontalLinesVisible: false,
-            isVerticalLinesVisible: false
+            isGridHorizontalLinesVisible: false,
+            isGridVerticalLinesVisible: false
 
           }
           series: [
@@ -161,9 +160,8 @@
         axesOptions.y = this.sanitizeAxisOptions(axesOptions.y)
         axesOptions.y2 = this.sanitizeAxisOptions(axesOptions.y2) if secondAxis
 
-        axesOptions.isGridVisible = if axesOptions.isGridVisible in [true, false] then axesOptions.isGridVisible else false
-        axesOptions.isHorizontalLinesVisible = if axesOptions.isHorizontalLinesVisible in [true, false] then axesOptions.isHorizontalLinesVisible else false
-        axesOptions.isVerticalLinesVisible = if axesOptions.isVerticalLinesVisible in [true, false] then axesOptions.isVerticalLinesVisible else false
+        axesOptions.isGridHorizontalLinesVisible = if axesOptions.isGridHorizontalLinesVisible in [true, false] then axesOptions.isGridHorizontalLinesVisible else false
+        axesOptions.isGridVerticalLinesVisible = if axesOptions.isGridVerticalLinesVisible in [true, false] then axesOptions.isGridVerticalLinesVisible else false
 
         return axesOptions
 

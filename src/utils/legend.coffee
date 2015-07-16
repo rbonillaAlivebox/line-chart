@@ -31,8 +31,6 @@
       getLegendItemsWidths: (svg, axis, series) ->
         that = this
         bbox = (t) ->
-          if d3.select(t).data()[0].iconIsVisible is false
-            return that.getTextBBox(t).width - 12
           return that.getTextBBox(t).width
 
         items = svg.selectAll(".legendItem.#{axis}")
@@ -116,7 +114,11 @@
                   'class': (d, i) -> "legendText series_#{i}"
                   'font-family': 'Courier'
                   'font-size': 10
-                  'transform': 'translate(13, 4)'
+                  'transform': (s) ->
+                    if s.iconIsVisible is true
+                      return 'translate(13, 4)'
+                    else
+                      return 'translate(-10, 4)'
                   'text-rendering': 'geometric-precision'
                 )
                 .text((s) ->
