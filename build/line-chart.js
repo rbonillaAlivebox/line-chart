@@ -1,6 +1,6 @@
 
 /*
-line-chart - v1.1.10 - 14 July 2015
+line-chart - v1.1.10 - 16 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
  */
@@ -1009,6 +1009,9 @@ mod.factory('n3utils', [
             }
             return seriesData.values.push(d);
           });
+          if (s.type === 'dailyTriangles') {
+            seriesData.dailyTrianglesData = s.dailyTrianglesData;
+          }
           return seriesData;
         });
         if ((options.stacks == null) || options.stacks.length === 0) {
@@ -1334,7 +1337,7 @@ mod.factory('n3utils', [
           var cnt, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
           s.axis = ((_ref = s.axis) != null ? _ref.toLowerCase() : void 0) !== 'y2' ? 'y' : 'y2';
           s.color || (s.color = colors(i));
-          s.type = (_ref1 = s.type) === 'line' || _ref1 === 'area' || _ref1 === 'column' || _ref1 === 'candlestick' || _ref1 === 'ohlc' ? s.type : "line";
+          s.type = (_ref1 = s.type) === 'line' || _ref1 === 'area' || _ref1 === 'column' || _ref1 === 'candlestick' || _ref1 === 'ohlc' || _ref1 === 'dailyTriangles' ? s.type : "line";
           s.labelIsClickable = (_ref2 = s.labelIsClickable) === true || _ref2 === false ? s.labelIsClickable : true;
           s.iconIsVisible = (_ref3 = s.iconIsVisible) === true || _ref3 === false ? s.iconIsVisible : true;
           s.labelIsVisible = (_ref4 = s.labelIsVisible) === true || _ref4 === false ? s.labelIsVisible : true;
@@ -2092,6 +2095,33 @@ mod.factory('n3utils', [
         svg.select("#xTooltip").transition().attr('opacity', 0);
         svg.select("#yTooltip").transition().attr('opacity', 0);
         return svg.select("#y2Tooltip").transition().attr('opacity', 0);
+      },
+      drawTriangles: function(svg, axes, data, columnWidth, options, handlers, dimensions) {
+        this.drawDailyTriangles();
+        return this;
+      },
+      drawDailyTriangles: function(svg, axes, data) {
+        var that, triangleGroup;
+        that = this;
+        data = data.filter(function(s) {
+          return s.type === 'dailyTriangles';
+        });
+        if (data.length === 0) {
+          return this;
+        }
+        triangleGroup = svg.select('.content').selectAll('.dailyTrianglesGroup').data(data).enter().append('g').attr('class', function(s) {
+          return 'dailyTrianglesGroup series_' + s.index;
+        });
+        return triangleGroup.selectAll('open').data(function(d) {
+          return d.values;
+        }).enter().append('svg:polygon').attr('points', function(d) {
+          return that.getPositiveTrianglePoints();
+        });
+      },
+      getPositiveTrianglePoints: function() {
+        var points;
+        points = '15.529,15.529 15.529,15.059 0.941,15.059 0.941,0.941 15.059,0.941 15.059,15.529 15.529,15.529 15.529,' + '15.059 15.529,15.529 16,15.529 16,0 0,0 0,16 16,16 16,15.529';
+        return points;
       }
     };
   }

@@ -209,6 +209,9 @@
             d.dotSize = s.dotSize if s.dotSize?
             seriesData.values.push(d)
 
+          if s.type is 'dailyTriangles'
+            seriesData.dailyTrianglesData = s.dailyTrianglesData
+
           return seriesData
 
         if !options.stacks? or options.stacks.length is 0
