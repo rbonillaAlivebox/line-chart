@@ -58,6 +58,10 @@
             that.updateTextLegendWithTooltip(svg, index, text)
             that.updateTranslateLegends(svg, options.series[series.index], dimensions)
 
+          if options.series[index].isTooltipDisplayed is false
+            item.attr('opacity', 0)
+            return
+
           if options.tooltip.type is 'complete'
             right = item.select('.rightTT')
             rText = right.select('text')
@@ -104,6 +108,9 @@
 
         data.forEach (series, index) ->
           if options.series[index].visible is false
+            return
+
+          if options.series[index].isTooltipDisplayed is false
             return
 
           p = positions[index]

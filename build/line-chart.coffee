@@ -138,7 +138,10 @@ directive('linechart', ['n3utils', '$window', '$timeout', (n3utils, $window, $ti
       # Events
       click: '=onClick',  hover: '=onHover',  focus: '=onFocus',  toggle: '=onToggle'
     template: '<div></div>'
-    link: link
+    link: (scope, element, attrs, ctrl) ->  $timeout(
+        () -> link(scope, element, attrs, ctrl),
+        0
+      )
   }
 ])
 
@@ -1181,7 +1184,8 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
             labelIsClickable: true,
             iconIsVisible: true,
             labelIsVisible: true,
-            labelIsUpdatedWithTooltip: false
+            labelIsUpdatedWithTooltip: false,
+            isTooltipDisplayed: true
           ]
           drawLegend: true
           drawDots: true
@@ -1289,6 +1293,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           s.iconIsVisible = if s.iconIsVisible in [true, false] then s.iconIsVisible else true
           s.labelIsVisible = if s.labelIsVisible in [true, false] then s.labelIsVisible else true
           s.labelIsUpdatedWithTooltip = if s.labelIsUpdatedWithTooltip in [true, false] then s.labelIsUpdatedWithTooltip else false
+          s.isTooltipDisplayed = if s.isTooltipDisplayed in [true, false] then s.isTooltipDisplayed else true
 
           if s.type is 'column'
             delete s.thickness
@@ -1759,6 +1764,10 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
             that.updateTextLegendWithTooltip(svg, index, text)
             that.updateTranslateLegends(svg, options.series[series.index], dimensions)
 
+          if options.series[index].isTooltipDisplayed is false
+            item.attr('opacity', 0)
+            return
+
           if options.tooltip.type is 'complete'
             right = item.select('.rightTT')
             rText = right.select('text')
@@ -1805,6 +1814,9 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
 
         data.forEach (series, index) ->
           if options.series[index].visible is false
+            return
+
+          if options.series[index].isTooltipDisplayed is false
             return
 
           p = positions[index]

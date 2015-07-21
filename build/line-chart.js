@@ -134,7 +134,11 @@ directive('linechart', [
         toggle: '=onToggle'
       },
       template: '<div></div>',
-      link: link
+      link: function(scope, element, attrs, ctrl) {
+        return $timeout(function() {
+          return link(scope, element, attrs, ctrl);
+        }, 0);
+      }
     };
   }
 ]);
@@ -1237,7 +1241,8 @@ mod.factory('n3utils', [
               labelIsClickable: true,
               iconIsVisible: true,
               labelIsVisible: true,
-              labelIsUpdatedWithTooltip: false
+              labelIsUpdatedWithTooltip: false,
+              isTooltipDisplayed: true
             }
           ],
           drawLegend: true,
@@ -1357,7 +1362,7 @@ mod.factory('n3utils', [
           }
         });
         options.forEach(function(s, i) {
-          var cnt, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
+          var cnt, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
           s.axis = ((_ref = s.axis) != null ? _ref.toLowerCase() : void 0) !== 'y2' ? 'y' : 'y2';
           s.color || (s.color = colors(i));
           s.type = (_ref1 = s.type) === 'line' || _ref1 === 'area' || _ref1 === 'column' || _ref1 === 'candlestick' || _ref1 === 'ohlc' || _ref1 === 'dailyTriangles' || _ref1 === 'weeklyTriangles' || _ref1 === 'monthlyTriangles' || _ref1 === 'trianglesLegend' ? s.type : "line";
@@ -1365,6 +1370,7 @@ mod.factory('n3utils', [
           s.iconIsVisible = (_ref3 = s.iconIsVisible) === true || _ref3 === false ? s.iconIsVisible : true;
           s.labelIsVisible = (_ref4 = s.labelIsVisible) === true || _ref4 === false ? s.labelIsVisible : true;
           s.labelIsUpdatedWithTooltip = (_ref5 = s.labelIsUpdatedWithTooltip) === true || _ref5 === false ? s.labelIsUpdatedWithTooltip : false;
+          s.isTooltipDisplayed = (_ref6 = s.isTooltipDisplayed) === true || _ref6 === false ? s.isTooltipDisplayed : true;
           if (s.type === 'column') {
             delete s.thickness;
             delete s.lineMode;
@@ -1373,8 +1379,8 @@ mod.factory('n3utils', [
           } else if (!/^\d+px$/.test(s.thickness)) {
             s.thickness = '1px';
           }
-          if ((_ref6 = s.type) === 'line' || _ref6 === 'area') {
-            if ((_ref7 = s.lineMode) !== 'dashed') {
+          if ((_ref7 = s.type) === 'line' || _ref7 === 'area') {
+            if ((_ref8 = s.lineMode) !== 'dashed') {
               delete s.lineMode;
             }
             if (s.drawDots !== false && (s.dotSize == null)) {
@@ -1812,6 +1818,10 @@ mod.factory('n3utils', [
             that.updateTextLegendWithTooltip(svg, index, text);
             that.updateTranslateLegends(svg, options.series[series.index], dimensions);
           }
+          if (options.series[index].isTooltipDisplayed === false) {
+            item.attr('opacity', 0);
+            return;
+          }
           if (options.tooltip.type === 'complete') {
             right = item.select('.rightTT');
             rText = right.select('text');
@@ -1860,6 +1870,9 @@ mod.factory('n3utils', [
         return data.forEach(function(series, index) {
           var item, p, tt, xOffset;
           if (options.series[index].visible === false) {
+            return;
+          }
+          if (options.series[index].isTooltipDisplayed === false) {
             return;
           }
           p = positions[index];

@@ -15,7 +15,8 @@
             labelIsClickable: true,
             iconIsVisible: true,
             labelIsVisible: true,
-            labelIsUpdatedWithTooltip: false
+            labelIsUpdatedWithTooltip: false,
+            isTooltipDisplayed: true
           ]
           drawLegend: true
           drawDots: true
@@ -123,6 +124,7 @@
           s.iconIsVisible = if s.iconIsVisible in [true, false] then s.iconIsVisible else true
           s.labelIsVisible = if s.labelIsVisible in [true, false] then s.labelIsVisible else true
           s.labelIsUpdatedWithTooltip = if s.labelIsUpdatedWithTooltip in [true, false] then s.labelIsUpdatedWithTooltip else false
+          s.isTooltipDisplayed = if s.isTooltipDisplayed in [true, false] then s.isTooltipDisplayed else true
 
           if s.type is 'column'
             delete s.thickness

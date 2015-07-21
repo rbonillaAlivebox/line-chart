@@ -132,6 +132,9 @@ directive('linechart', ['n3utils', '$window', '$timeout', (n3utils, $window, $ti
       # Events
       click: '=onClick',  hover: '=onHover',  focus: '=onFocus',  toggle: '=onToggle'
     template: '<div></div>'
-    link: link
+    link: (scope, element, attrs, ctrl) ->  $timeout(
+        () -> link(scope, element, attrs, ctrl),
+        0
+      )
   }
 ])
