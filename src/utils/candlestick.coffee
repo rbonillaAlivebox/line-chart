@@ -8,6 +8,11 @@
         if data.length == 0
           return this
 
+        candleWidth = (0.5 * width) / data[0].values.length
+        if candleWidth > 60
+          candleWidth = 60
+        if candleWidth < 4
+          candleWidth = 4
         gainColor = 'green'
         lossColor = 'red'
 
@@ -24,7 +29,7 @@
           .attr(
             x: (d) ->
               tmpX = axes.xScale(d.x)
-              return tmpX - 15
+              return tmpX - (candleWidth / 2)
             y: (d) ->
               tmpY = axes[d.axis + 'Scale'](d.open)
               tmpHeight = axes[d.axis + 'Scale'](d.close) - axes[d.axis + 'Scale'](d.open)
@@ -33,7 +38,7 @@
                 tmpY = tmpY - tmpHeight
               return tmpY
             width: (d) ->
-              return 30
+              return candleWidth
             height: (d) ->
               tmpHeight = axes[d.axis + 'Scale'](d.close) - axes[d.axis + 'Scale'](d.open)
               if tmpHeight < 0

@@ -8,6 +8,11 @@
         if data.length == 0
           return this
 
+        lineWidth = (0.5 * width) / data[0].values.length
+        if lineWidth > 20
+          lineWidth = 20
+        if lineWidth < 4
+          lineWidth = 4
         gainColor = options.series[0].gainColor if options.series[0].gainColor
         lossColor = options.series[0].lossColor if options.series[0].lossColor
 
@@ -21,7 +26,7 @@
           .attr(
             x1: (d) ->
               tmpX = axes.xScale(d.x)
-              return tmpX - 20
+              return tmpX - lineWidth
             y1: (d) ->
               return axes[d.axis + 'Scale'](d.open)
             x2: (d) ->
@@ -45,7 +50,7 @@
               return axes[d.axis + 'Scale'](d.close)
             x2: (d) ->
               tmpX = axes.xScale(d.x)
-              return tmpX + 20
+              return tmpX + lineWidth
             y2: (d) ->
               return axes[d.axis + 'Scale'](d.close)
             stroke: (d) ->

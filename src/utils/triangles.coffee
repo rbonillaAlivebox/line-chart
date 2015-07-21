@@ -31,10 +31,16 @@
         )
         .attr('transform', (d) ->
           x = axes.xScale(d.x) - 8
-          if d.isUp is true
-            y = axes.y2Scale(d.closeValue) + 2
+          if d.chartType is 'Line'
+            if d.isUp is true
+              y = axes.y2Scale(d.closeValue) + 2
+            else
+              y = axes.y2Scale(d.closeValue) - 16
           else
-            y = axes.y2Scale(d.closeValue) - 16
+            if d.isUp is true
+              y = axes.y2Scale(d.lowValue) + 1
+            else
+              y = axes.y2Scale(d.highValue) - 16
           return 'translate('+ x + ',' + y + ')'
         )
         .attr('fill', (d) ->
@@ -54,10 +60,16 @@
       )
       .attr('transform', (d) ->
         x = axes.xScale(d.x) - 8
-        if d.isUp is true
-          y = axes.y2Scale(d.closeValue) + 2
+        if d.chartType is 'Line'
+          if d.isUp is true
+            y = axes.y2Scale(d.closeValue) + 2
+          else
+            y = axes.y2Scale(d.closeValue) - 16
         else
-          y = axes.y2Scale(d.closeValue) - 16
+          if d.isUp is true
+            y = axes.y2Scale(d.lowValue) + 1
+          else
+            y = axes.y2Scale(d.highValue) - 16
         return 'translate('+ x + ',' + y + ')'
       )
       .attr('fill', '#FFFFFF')
@@ -103,10 +115,16 @@
       )
       .attr('transform', (d) ->
         x = axes.xScale(d.x) - 8
-        if d.isUp is true
-          y = axes.y2Scale(d.closeValue) + 2
+        if d.chartType is 'Line'
+          if d.isUp is true
+            y = axes.y2Scale(d.closeValue) + 2
+          else
+            y = axes.y2Scale(d.closeValue) - 16
         else
-          y = axes.y2Scale(d.closeValue) - 16
+          if d.isUp is true
+            y = axes.y2Scale(d.lowValue) + 1
+          else
+            y = axes.y2Scale(d.highValue) - 16
         return 'translate('+ x + ',' + y + ')'
       )
       .attr('fill', (d) ->
@@ -126,10 +144,16 @@
       )
       .attr('transform', (d) ->
         x = axes.xScale(d.x) - 8
-        if d.isUp is true
-          y = axes.y2Scale(d.closeValue) + 2
+        if d.chartType is 'Line'
+          if d.isUp is true
+            y = axes.y2Scale(d.closeValue) + 2
+          else
+            y = axes.y2Scale(d.closeValue) - 16
         else
-          y = axes.y2Scale(d.closeValue) - 16
+          if d.isUp is true
+            y = axes.y2Scale(d.lowValue) + 1
+          else
+            y = axes.y2Scale(d.highValue) - 16
         return 'translate('+ x + ',' + y + ')'
       )
       .attr('fill', '#FFFFFF')
@@ -169,10 +193,16 @@
       )
       .attr('transform', (d) ->
         x = axes.xScale(d.x) - 8
-        if d.isUp is true
-          y = axes.y2Scale(d.closeValue) + 2
+        if d.chartType is 'Line'
+          if d.isUp is true
+            y = axes.y2Scale(d.closeValue) + 2
+          else
+            y = axes.y2Scale(d.closeValue) - 16
         else
-          y = axes.y2Scale(d.closeValue) - 16
+          if d.isUp is true
+            y = axes.y2Scale(d.lowValue) + 1
+          else
+            y = axes.y2Scale(d.highValue) - 16
         return 'translate('+ x + ',' + y + ')'
       )
       .attr('fill', (d) ->
@@ -192,10 +222,16 @@
       )
       .attr('transform', (d) ->
         x = axes.xScale(d.x) - 8
-        if d.isUp is true
-          y = axes.y2Scale(d.closeValue) + 2
+        if d.chartType is 'Line'
+          if d.isUp is true
+            y = axes.y2Scale(d.closeValue) + 2
+          else
+            y = axes.y2Scale(d.closeValue) - 16
         else
-          y = axes.y2Scale(d.closeValue) - 16
+          if d.isUp is true
+            y = axes.y2Scale(d.lowValue) + 1
+          else
+            y = axes.y2Scale(d.highValue) - 16
         return 'translate('+ x + ',' + y + ')'
       )
       .attr('fill', '#FFFFFF')

@@ -1,6 +1,6 @@
 
 /*
-line-chart - v1.1.10 - 20 July 2015
+line-chart - v1.1.10 - 21 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
  */
@@ -216,7 +216,7 @@ mod.factory('n3utils', [
         }).interpolate(mode).tension(tension);
       },
       drawCandlestick: function(svg, axes, data, columnWidth, options, handlers, dimensions) {
-        var colGroup, gainColor, height, lossColor, that, width;
+        var candleWidth, colGroup, gainColor, height, lossColor, that, width;
         that = this;
         height = dimensions.height;
         width = dimensions.width;
@@ -225,6 +225,13 @@ mod.factory('n3utils', [
         });
         if (data.length === 0) {
           return this;
+        }
+        candleWidth = (0.5 * width) / data[0].values.length;
+        if (candleWidth > 60) {
+          candleWidth = 60;
+        }
+        if (candleWidth < 4) {
+          candleWidth = 4;
         }
         gainColor = 'green';
         lossColor = 'red';
@@ -243,7 +250,7 @@ mod.factory('n3utils', [
           x: function(d) {
             var tmpX;
             tmpX = axes.xScale(d.x);
-            return tmpX - 15;
+            return tmpX - (candleWidth / 2);
           },
           y: function(d) {
             var tmpHeight, tmpY;
@@ -256,7 +263,7 @@ mod.factory('n3utils', [
             return tmpY;
           },
           width: function(d) {
-            return 30;
+            return candleWidth;
           },
           height: function(d) {
             var tmpHeight;
@@ -1101,7 +1108,7 @@ mod.factory('n3utils', [
         return widest;
       },
       drawOhlc: function(svg, axes, data, columnWidth, options, handlers, dimensions) {
-        var colGroup, gainColor, height, lossColor, that, width;
+        var colGroup, gainColor, height, lineWidth, lossColor, that, width;
         that = this;
         height = dimensions.height;
         width = dimensions.width;
@@ -1110,6 +1117,13 @@ mod.factory('n3utils', [
         });
         if (data.length === 0) {
           return this;
+        }
+        lineWidth = (0.5 * width) / data[0].values.length;
+        if (lineWidth > 20) {
+          lineWidth = 20;
+        }
+        if (lineWidth < 4) {
+          lineWidth = 4;
         }
         if (options.series[0].gainColor) {
           gainColor = options.series[0].gainColor;
@@ -1126,7 +1140,7 @@ mod.factory('n3utils', [
           x1: function(d) {
             var tmpX;
             tmpX = axes.xScale(d.x);
-            return tmpX - 20;
+            return tmpX - lineWidth;
           },
           y1: function(d) {
             return axes[d.axis + 'Scale'](d.open);
@@ -1160,7 +1174,7 @@ mod.factory('n3utils', [
           x2: function(d) {
             var tmpX;
             tmpX = axes.xScale(d.x);
-            return tmpX + 20;
+            return tmpX + lineWidth;
           },
           y2: function(d) {
             return axes[d.axis + 'Scale'](d.close);
@@ -2137,10 +2151,18 @@ mod.factory('n3utils', [
         }).attr('transform', function(d) {
           var x, y;
           x = axes.xScale(d.x) - 8;
-          if (d.isUp === true) {
-            y = axes.y2Scale(d.closeValue) + 2;
+          if (d.chartType === 'Line') {
+            if (d.isUp === true) {
+              y = axes.y2Scale(d.closeValue) + 2;
+            } else {
+              y = axes.y2Scale(d.closeValue) - 16;
+            }
           } else {
-            y = axes.y2Scale(d.closeValue) - 16;
+            if (d.isUp === true) {
+              y = axes.y2Scale(d.lowValue) + 1;
+            } else {
+              y = axes.y2Scale(d.highValue) - 16;
+            }
           }
           return 'translate(' + x + ',' + y + ')';
         }).attr('fill', function(d) {
@@ -2161,10 +2183,18 @@ mod.factory('n3utils', [
         }).attr('transform', function(d) {
           var x, y;
           x = axes.xScale(d.x) - 8;
-          if (d.isUp === true) {
-            y = axes.y2Scale(d.closeValue) + 2;
+          if (d.chartType === 'Line') {
+            if (d.isUp === true) {
+              y = axes.y2Scale(d.closeValue) + 2;
+            } else {
+              y = axes.y2Scale(d.closeValue) - 16;
+            }
           } else {
-            y = axes.y2Scale(d.closeValue) - 16;
+            if (d.isUp === true) {
+              y = axes.y2Scale(d.lowValue) + 1;
+            } else {
+              y = axes.y2Scale(d.highValue) - 16;
+            }
           }
           return 'translate(' + x + ',' + y + ')';
         }).attr('fill', '#FFFFFF');
@@ -2203,10 +2233,18 @@ mod.factory('n3utils', [
         }).attr('transform', function(d) {
           var x, y;
           x = axes.xScale(d.x) - 8;
-          if (d.isUp === true) {
-            y = axes.y2Scale(d.closeValue) + 2;
+          if (d.chartType === 'Line') {
+            if (d.isUp === true) {
+              y = axes.y2Scale(d.closeValue) + 2;
+            } else {
+              y = axes.y2Scale(d.closeValue) - 16;
+            }
           } else {
-            y = axes.y2Scale(d.closeValue) - 16;
+            if (d.isUp === true) {
+              y = axes.y2Scale(d.lowValue) + 1;
+            } else {
+              y = axes.y2Scale(d.highValue) - 16;
+            }
           }
           return 'translate(' + x + ',' + y + ')';
         }).attr('fill', function(d) {
@@ -2227,10 +2265,18 @@ mod.factory('n3utils', [
         }).attr('transform', function(d) {
           var x, y;
           x = axes.xScale(d.x) - 8;
-          if (d.isUp === true) {
-            y = axes.y2Scale(d.closeValue) + 2;
+          if (d.chartType === 'Line') {
+            if (d.isUp === true) {
+              y = axes.y2Scale(d.closeValue) + 2;
+            } else {
+              y = axes.y2Scale(d.closeValue) - 16;
+            }
           } else {
-            y = axes.y2Scale(d.closeValue) - 16;
+            if (d.isUp === true) {
+              y = axes.y2Scale(d.lowValue) + 1;
+            } else {
+              y = axes.y2Scale(d.highValue) - 16;
+            }
           }
           return 'translate(' + x + ',' + y + ')';
         }).attr('fill', '#FFFFFF');
@@ -2269,10 +2315,18 @@ mod.factory('n3utils', [
         }).attr('transform', function(d) {
           var x, y;
           x = axes.xScale(d.x) - 8;
-          if (d.isUp === true) {
-            y = axes.y2Scale(d.closeValue) + 2;
+          if (d.chartType === 'Line') {
+            if (d.isUp === true) {
+              y = axes.y2Scale(d.closeValue) + 2;
+            } else {
+              y = axes.y2Scale(d.closeValue) - 16;
+            }
           } else {
-            y = axes.y2Scale(d.closeValue) - 16;
+            if (d.isUp === true) {
+              y = axes.y2Scale(d.lowValue) + 1;
+            } else {
+              y = axes.y2Scale(d.highValue) - 16;
+            }
           }
           return 'translate(' + x + ',' + y + ')';
         }).attr('fill', function(d) {
@@ -2293,10 +2347,18 @@ mod.factory('n3utils', [
         }).attr('transform', function(d) {
           var x, y;
           x = axes.xScale(d.x) - 8;
-          if (d.isUp === true) {
-            y = axes.y2Scale(d.closeValue) + 2;
+          if (d.chartType === 'Line') {
+            if (d.isUp === true) {
+              y = axes.y2Scale(d.closeValue) + 2;
+            } else {
+              y = axes.y2Scale(d.closeValue) - 16;
+            }
           } else {
-            y = axes.y2Scale(d.closeValue) - 16;
+            if (d.isUp === true) {
+              y = axes.y2Scale(d.lowValue) + 1;
+            } else {
+              y = axes.y2Scale(d.highValue) - 16;
+            }
           }
           return 'translate(' + x + ',' + y + ')';
         }).attr('fill', '#FFFFFF');
