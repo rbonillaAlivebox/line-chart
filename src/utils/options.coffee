@@ -118,7 +118,7 @@
         options.forEach (s, i) ->
           s.axis = if s.axis?.toLowerCase() isnt 'y2' then 'y' else 'y2'
           s.color or= colors(i)
-          s.type = if s.type in ['line', 'area', 'column', 'candlestick', 'ohlc', 'dailyTriangles'] then s.type else "line"
+          s.type = if s.type in ['line', 'area', 'column', 'candlestick', 'ohlc', 'dailyTriangles', 'weeklyTriangles', 'monthlyTriangles', 'trianglesLegend'] then s.type else "line"
           s.labelIsClickable = if s.labelIsClickable in [true, false] then s.labelIsClickable else true
           s.iconIsVisible = if s.iconIsVisible in [true, false] then s.iconIsVisible else true
           s.labelIsVisible = if s.labelIsVisible in [true, false] then s.labelIsVisible else true

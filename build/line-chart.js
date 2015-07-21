@@ -1,6 +1,6 @@
 
 /*
-line-chart - v1.1.10 - 16 July 2015
+line-chart - v1.1.10 - 20 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
  */
@@ -64,7 +64,7 @@ directive('linechart', [
         _u.createContent(svg, id, options, handlers);
         if (dataPerSeries.length) {
           columnWidth = _u.getBestColumnWidth(axes, dimensions, dataPerSeries, options);
-          _u.drawArea(svg, axes, dataPerSeries, options, handlers).drawColumns(svg, axes, dataPerSeries, columnWidth, options, handlers, dispatch).drawLines(svg, axes, dataPerSeries, options, handlers).drawCandlestick(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions).drawOhlc(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions);
+          _u.drawArea(svg, axes, dataPerSeries, options, handlers).drawColumns(svg, axes, dataPerSeries, columnWidth, options, handlers, dispatch).drawLines(svg, axes, dataPerSeries, options, handlers).drawCandlestick(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions).drawOhlc(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions).drawTriangles(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions);
           if (options.drawDots) {
             _u.drawDots(svg, axes, dataPerSeries, options, handlers, dispatch);
           }
@@ -1012,6 +1012,15 @@ mod.factory('n3utils', [
           if (s.type === 'dailyTriangles') {
             seriesData.dailyTrianglesData = s.dailyTrianglesData;
           }
+          if (s.type === 'weeklyTriangles') {
+            seriesData.weeklyTrianglesData = s.weeklyTrianglesData;
+          }
+          if (s.type === 'monthlyTriangles') {
+            seriesData.monthlyTrianglesData = s.monthlyTrianglesData;
+          }
+          if (s.type === 'trianglesLegend') {
+            seriesData.trianglesLegendData = s.trianglesLegendData;
+          }
           return seriesData;
         });
         if ((options.stacks == null) || options.stacks.length === 0) {
@@ -1337,7 +1346,7 @@ mod.factory('n3utils', [
           var cnt, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
           s.axis = ((_ref = s.axis) != null ? _ref.toLowerCase() : void 0) !== 'y2' ? 'y' : 'y2';
           s.color || (s.color = colors(i));
-          s.type = (_ref1 = s.type) === 'line' || _ref1 === 'area' || _ref1 === 'column' || _ref1 === 'candlestick' || _ref1 === 'ohlc' || _ref1 === 'dailyTriangles' ? s.type : "line";
+          s.type = (_ref1 = s.type) === 'line' || _ref1 === 'area' || _ref1 === 'column' || _ref1 === 'candlestick' || _ref1 === 'ohlc' || _ref1 === 'dailyTriangles' || _ref1 === 'weeklyTriangles' || _ref1 === 'monthlyTriangles' || _ref1 === 'trianglesLegend' ? s.type : "line";
           s.labelIsClickable = (_ref2 = s.labelIsClickable) === true || _ref2 === false ? s.labelIsClickable : true;
           s.iconIsVisible = (_ref3 = s.iconIsVisible) === true || _ref3 === false ? s.iconIsVisible : true;
           s.labelIsVisible = (_ref4 = s.labelIsVisible) === true || _ref4 === false ? s.labelIsVisible : true;
@@ -2097,7 +2106,10 @@ mod.factory('n3utils', [
         return svg.select("#y2Tooltip").transition().attr('opacity', 0);
       },
       drawTriangles: function(svg, axes, data, columnWidth, options, handlers, dimensions) {
-        this.drawDailyTriangles();
+        this.drawDailyTriangles(svg, axes, data);
+        this.drawWeeklyTriangles(svg, axes, data);
+        this.drawMonthlyTriangles(svg, axes, data);
+        this.drawTriangleLegend(svg, axes, data);
         return this;
       },
       drawDailyTriangles: function(svg, axes, data) {
@@ -2106,22 +2118,443 @@ mod.factory('n3utils', [
         data = data.filter(function(s) {
           return s.type === 'dailyTriangles';
         });
-        if (data.length === 0) {
+        if (data.length === 0 || data[0].dailyTrianglesData === null || data[0].dailyTrianglesData.length === 0) {
           return this;
         }
         triangleGroup = svg.select('.content').selectAll('.dailyTrianglesGroup').data(data).enter().append('g').attr('class', function(s) {
           return 'dailyTrianglesGroup series_' + s.index;
         });
-        return triangleGroup.selectAll('open').data(function(d) {
-          return d.values;
+        this.drawDailyTrianglePolygons(triangleGroup, axes);
+        return this.drawDailyTriangleWords(triangleGroup, axes);
+      },
+      drawDailyTrianglePolygons: function(triangleGroup, axes) {
+        var that;
+        that = this;
+        return triangleGroup.selectAll('dailyTriangles').data(function(d) {
+          return d.dailyTrianglesData;
         }).enter().append('svg:polygon').attr('points', function(d) {
-          return that.getPositiveTrianglePoints();
+          return that.getTrianglePoints(d.isUp);
+        }).attr('transform', function(d) {
+          var x, y;
+          x = axes.xScale(d.x) - 8;
+          if (d.isUp === true) {
+            y = axes.y2Scale(d.closeValue) + 2;
+          } else {
+            y = axes.y2Scale(d.closeValue) - 16;
+          }
+          return 'translate(' + x + ',' + y + ')';
+        }).attr('fill', function(d) {
+          if (d.isUp === true) {
+            return '#009933';
+          } else {
+            return '#CC0000';
+          }
         });
       },
-      getPositiveTrianglePoints: function() {
+      drawDailyTriangleWords: function(triangleGroup, axes) {
+        var that;
+        that = this;
+        return triangleGroup.selectAll('dailyWords').data(function(d) {
+          return d.dailyTrianglesData;
+        }).enter().append('svg:path').attr('d', function(d) {
+          return that.getDailyTrianglePath(d.isUp);
+        }).attr('transform', function(d) {
+          var x, y;
+          x = axes.xScale(d.x) - 8;
+          if (d.isUp === true) {
+            y = axes.y2Scale(d.closeValue) + 2;
+          } else {
+            y = axes.y2Scale(d.closeValue) - 16;
+          }
+          return 'translate(' + x + ',' + y + ')';
+        }).attr('fill', '#FFFFFF');
+      },
+      getDailyTrianglePath: function(isUp) {
+        var path;
+        if (isUp === true) {
+          path = 'M4.5,7.5h3.495c0.687,0,1.241,0.086,1.667,0.258c0.423,0.172,0.773,0.419,1.049,0.742' + 'c0.279,0.318,0.479,0.695,0.602,1.123c0.127,0.424,0.188,0.875,0.188,1.354c0,0.748-0.091,1.33-0.277,1.739' + 'c-0.184,0.412-0.439,0.759-0.771,1.036c-0.325,0.277-0.678,0.464-1.057,0.559C8.878,14.436,8.412,14.5,7.995,14.5H4.5V7.5z' + 'M6.851,9.086v3.823h0.576c0.492,0,0.841-0.05,1.048-0.149c0.207-0.102,0.371-0.275,0.487-0.525c0.118-0.25,0.177-0.655,0.177-1.217' + 'c0-0.74-0.132-1.248-0.394-1.521c-0.263-0.274-0.699-0.413-1.31-0.413H6.851V9.086z';
+        } else {
+          path = 'M4.5,1.5h3.495c0.687,0,1.241,0.086,1.667,0.258c0.423,0.172,0.775,0.419,1.049,0.742' + 'c0.279,0.319,0.479,0.695,0.602,1.123C11.439,4.047,11.5,4.498,11.5,4.976c0,0.749-0.091,1.33-0.277,1.74' + 'c-0.184,0.412-0.439,0.759-0.771,1.036C10.126,8.03,9.773,8.216,9.395,8.311C8.878,8.436,8.412,8.5,7.995,8.5H4.5V1.5z M6.851,3.086' + 'v3.823h0.576c0.492,0,0.841-0.05,1.048-0.149c0.207-0.102,0.371-0.276,0.487-0.525c0.118-0.25,0.177-0.656,0.177-1.217' + 'c0-0.74-0.132-1.248-0.394-1.521c-0.263-0.275-0.699-0.413-1.31-0.413H6.851V3.086z';
+        }
+        return path;
+      },
+      drawWeeklyTriangles: function(svg, axes, data) {
+        var that, triangleGroup;
+        that = this;
+        data = data.filter(function(s) {
+          return s.type === 'weeklyTriangles';
+        });
+        if (data.length === 0 || data[0].weeklyTrianglesData === null || data[0].weeklyTrianglesData.length === 0) {
+          return this;
+        }
+        triangleGroup = svg.select('.content').selectAll('.weeklyTrianglesGroup').data(data).enter().append('g').attr('class', function(s) {
+          return 'weeklyTrianglesGroup series_' + s.index;
+        });
+        this.drawWeeklyTrianglePolygons(triangleGroup, axes);
+        return this.drawWeeklyTriangleWords(triangleGroup, axes);
+      },
+      drawWeeklyTrianglePolygons: function(triangleGroup, axes) {
+        var that;
+        that = this;
+        return triangleGroup.selectAll('weeklyTriangles').data(function(d) {
+          return d.weeklyTrianglesData;
+        }).enter().append('svg:polygon').attr('points', function(d) {
+          return that.getTrianglePoints(d.isUp);
+        }).attr('transform', function(d) {
+          var x, y;
+          x = axes.xScale(d.x) - 8;
+          if (d.isUp === true) {
+            y = axes.y2Scale(d.closeValue) + 2;
+          } else {
+            y = axes.y2Scale(d.closeValue) - 16;
+          }
+          return 'translate(' + x + ',' + y + ')';
+        }).attr('fill', function(d) {
+          if (d.isUp === true) {
+            return '#009933';
+          } else {
+            return '#CC0000';
+          }
+        });
+      },
+      drawWeeklyTriangleWords: function(triangleGroup, axes) {
+        var that;
+        that = this;
+        return triangleGroup.selectAll('weeklyWords').data(function(d) {
+          return d.weeklyTrianglesData;
+        }).enter().append('svg:path').attr('d', function(d) {
+          return that.getWeeklyTrianglePath(d.isUp);
+        }).attr('transform', function(d) {
+          var x, y;
+          x = axes.xScale(d.x) - 8;
+          if (d.isUp === true) {
+            y = axes.y2Scale(d.closeValue) + 2;
+          } else {
+            y = axes.y2Scale(d.closeValue) - 16;
+          }
+          return 'translate(' + x + ',' + y + ')';
+        }).attr('fill', '#FFFFFF');
+      },
+      getWeeklyTrianglePath: function(isUp) {
+        var path;
+        if (isUp === true) {
+          path = 'M3,7.5h2.098l0.755,3.918L6.959,7.5H9.05l1.108,3.913L10.912,7.5H13l-1.577,7H9.258l-1.255-4.407L6.754,14.5' + 'H4.589L3,7.5z';
+        } else {
+          path = 'M3,1.5h2.098l0.755,3.917L6.959,1.5H9.05l1.108,3.913L10.912,1.5H13l-1.577,7H9.258L8.002,4.093L6.754,8.5' + 'H4.589L3,1.5z';
+        }
+        return path;
+      },
+      drawMonthlyTriangles: function(svg, axes, data) {
+        var that, triangleGroup;
+        that = this;
+        data = data.filter(function(s) {
+          return s.type === 'monthlyTriangles';
+        });
+        if (data.length === 0 || data[0].monthlyTrianglesData === null || data[0].monthlyTrianglesData.length === 0) {
+          return this;
+        }
+        triangleGroup = svg.select('.content').selectAll('.monthlyTrianglesGroup').data(data).enter().append('g').attr('class', function(s) {
+          return 'monthlyTrianglesGroup series_' + s.index;
+        });
+        this.drawMonthlyTrianglePolygons(triangleGroup, axes);
+        return this.drawMonthlyTriangleWords(triangleGroup, axes);
+      },
+      drawMonthlyTrianglePolygons: function(triangleGroup, axes) {
+        var that;
+        that = this;
+        return triangleGroup.selectAll('monthlyTriangles').data(function(d) {
+          return d.monthlyTrianglesData;
+        }).enter().append('svg:polygon').attr('points', function(d) {
+          return that.getTrianglePoints(d.isUp);
+        }).attr('transform', function(d) {
+          var x, y;
+          x = axes.xScale(d.x) - 8;
+          if (d.isUp === true) {
+            y = axes.y2Scale(d.closeValue) + 2;
+          } else {
+            y = axes.y2Scale(d.closeValue) - 16;
+          }
+          return 'translate(' + x + ',' + y + ')';
+        }).attr('fill', function(d) {
+          if (d.isUp === true) {
+            return '#009933';
+          } else {
+            return '#CC0000';
+          }
+        });
+      },
+      drawMonthlyTriangleWords: function(triangleGroup, axes) {
+        var that;
+        that = this;
+        return triangleGroup.selectAll('monthlyWords').data(function(d) {
+          return d.monthlyTrianglesData;
+        }).enter().append('svg:path').attr('d', function(d) {
+          return that.getMonthlyTrianglePath(d.isUp);
+        }).attr('transform', function(d) {
+          var x, y;
+          x = axes.xScale(d.x) - 8;
+          if (d.isUp === true) {
+            y = axes.y2Scale(d.closeValue) + 2;
+          } else {
+            y = axes.y2Scale(d.closeValue) - 16;
+          }
+          return 'translate(' + x + ',' + y + ')';
+        }).attr('fill', '#FFFFFF');
+      },
+      getMonthlyTrianglePath: function(isUp) {
+        var path;
+        if (isUp === true) {
+          path = 'M3.5,7.5h3.251l1.253,4.258L9.25,7.5h3.25v7h-2.024V9.162L8.914,14.5H7.081L5.523,9.162V14.5H3.5V7.5z';
+        } else {
+          path = 'M3.5,1.5h3.251l1.253,4.258L9.25,1.5h3.25v7h-2.024V3.162L8.914,8.5H7.081L5.523,3.162V8.5H3.5V1.5z';
+        }
+        return path;
+      },
+      getTrianglePoints: function(isUp) {
         var points;
-        points = '15.529,15.529 15.529,15.059 0.941,15.059 0.941,0.941 15.059,0.941 15.059,15.529 15.529,15.529 15.529,' + '15.059 15.529,15.529 16,15.529 16,0 0,0 0,16 16,16 16,15.529';
+        if (isUp === true) {
+          points = '16,15.5 7.999,0.5 0,15.5';
+        } else {
+          points = '0,0.5 7.999,15.5 16,0.5';
+        }
         return points;
+      },
+      drawTriangleLegend: function(svg, axes, data) {
+        var legend, that;
+        that = this;
+        data = data.filter(function(s) {
+          return s.type === 'trianglesLegend';
+        });
+        if (data.length === 0 || data[0].trianglesLegendData === null || data[0].trianglesLegendData === void 0) {
+          return this;
+        }
+        legend = svg.select('.content').selectAll('.trianglesLegend').data(data).enter().append('g').attr('class', 'trianglesLegend');
+        this.drawTriangleLegendRectangle(legend, data);
+        this.drawMonthlyTriangleLegendPolygon(legend, data);
+        this.drawMonthlyTriangleLegendWord(legend, data);
+        this.drawMonthlyTriangleLegendText(legend, data);
+        this.drawDailyTriangleLegendPolygon(legend, data);
+        this.drawDailyTriangleLegendWord(legend, data);
+        this.drawDailyTriangleLegendText(legend, data);
+        this.drawWeeklyTriangleLegendPolygon(legend, data);
+        this.drawWeeklyTriangleLegendWord(legend, data);
+        this.drawWeeklyTriangleLegendText(legend, data);
+        this.drawTraingleLegendDivider(legend, data);
+        this.drawTriangleLegendScoreLabel(legend, data);
+        return this.drawTriangleLegendScoreData(legend, data);
+      },
+      drawTriangleLegendRectangle: function(legend, data) {
+        return legend.selectAll('trianglesLegendRect').data(data).enter().append('svg:rect').attr({
+          x: 0,
+          y: 0,
+          width: 110,
+          height: 92,
+          fill: '#F5F5F5'
+        });
+      },
+      drawMonthlyTriangleLegendPolygon: function(legend, data) {
+        var that;
+        that = this;
+        return legend.selectAll('monthlyTriangleLegend').data(data).enter().append('svg:polygon').attr('points', function(d) {
+          return that.getTrianglePoints(d.trianglesLegendData.monthlyTrianglesLegendData.isUp);
+        }).attr('transform', function(d) {
+          var x, y;
+          x = 10;
+          if (d.trianglesLegendData.monthlyTrianglesLegendData.isUp === true) {
+            y = 8;
+          } else {
+            y = 12;
+          }
+          return 'translate(' + x + ',' + y + ')';
+        }).attr('fill', function(d) {
+          if (d.trianglesLegendData.monthlyTrianglesLegendData.isUp === true) {
+            return '#009933';
+          } else {
+            return '#CC0000';
+          }
+        });
+      },
+      drawMonthlyTriangleLegendWord: function(legend, data) {
+        var that;
+        that = this;
+        return legend.selectAll('monthlyTriangleLegend').data(data).enter().append('svg:path').attr('d', function(d) {
+          return that.getMonthlyTrianglePath(d.trianglesLegendData.monthlyTrianglesLegendData.isUp);
+        }).attr('transform', function(d) {
+          var x, y;
+          x = 10;
+          if (d.trianglesLegendData.monthlyTrianglesLegendData.isUp === true) {
+            y = 8;
+          } else {
+            y = 12;
+          }
+          return 'translate(' + x + ',' + y + ')';
+        }).attr('fill', '#FFFFFF');
+      },
+      drawMonthlyTriangleLegendText: function(legend, data) {
+        var that;
+        that = this;
+        return legend.selectAll('monthlyTriangleLegend').data(data).enter().append('svg:text').attr({
+          'font-family': 'Courier'
+        }).attr({
+          'font-size': 12
+        }).attr({
+          'transform': 'translate(35, 22)'
+        }).attr({
+          'text-rendering': 'geometric-precision'
+        }).text(function(d) {
+          return d.trianglesLegendData.monthlyTrianglesLegendData.value;
+        });
+      },
+      drawWeeklyTriangleLegendPolygon: function(legend, data) {
+        var that;
+        that = this;
+        return legend.selectAll('weeklyTriangleLegend').data(data).enter().append('svg:polygon').attr('points', function(d) {
+          return that.getTrianglePoints(d.trianglesLegendData.weeklyTrianglesLegendData.isUp);
+        }).attr('transform', function(d) {
+          var x, y;
+          x = 10;
+          if (d.trianglesLegendData.weeklyTrianglesLegendData.isUp === true) {
+            y = 28;
+          } else {
+            y = 31;
+          }
+          return 'translate(' + x + ',' + y + ')';
+        }).attr('fill', function(d) {
+          if (d.trianglesLegendData.weeklyTrianglesLegendData.isUp === true) {
+            return '#009933';
+          } else {
+            return '#CC0000';
+          }
+        });
+      },
+      drawWeeklyTriangleLegendWord: function(legend, data) {
+        var that;
+        that = this;
+        return legend.selectAll('weeklyTriangleLegend').data(data).enter().append('svg:path').attr('d', function(d) {
+          return that.getWeeklyTrianglePath(d.trianglesLegendData.weeklyTrianglesLegendData.isUp);
+        }).attr('transform', function(d) {
+          var x, y;
+          x = 10;
+          if (d.trianglesLegendData.weeklyTrianglesLegendData.isUp === true) {
+            y = 28;
+          } else {
+            y = 31;
+          }
+          return 'translate(' + x + ',' + y + ')';
+        }).attr('fill', '#FFFFFF');
+      },
+      drawWeeklyTriangleLegendText: function(legend, data) {
+        var that;
+        that = this;
+        return legend.selectAll('weeklyTriangleLegend').data(data).enter().append('svg:text').attr({
+          'font-family': 'Courier'
+        }).attr({
+          'font-size': 12
+        }).attr({
+          'transform': 'translate(35, 42)'
+        }).attr({
+          'text-rendering': 'geometric-precision'
+        }).text(function(d) {
+          return d.trianglesLegendData.weeklyTrianglesLegendData.value;
+        });
+      },
+      drawDailyTriangleLegendPolygon: function(legend, data) {
+        var that;
+        that = this;
+        return legend.selectAll('dailyTriangleLegend').data(data).enter().append('svg:polygon').attr('points', function(d) {
+          return that.getTrianglePoints(d.trianglesLegendData.dailyTrianglesLegendData.isUp);
+        }).attr('transform', function(d) {
+          var x, y;
+          x = 10;
+          if (d.trianglesLegendData.dailyTrianglesLegendData.isUp === true) {
+            y = 48;
+          } else {
+            y = 52;
+          }
+          return 'translate(' + x + ',' + y + ')';
+        }).attr('fill', function(d) {
+          if (d.trianglesLegendData.dailyTrianglesLegendData.isUp === true) {
+            return '#009933';
+          } else {
+            return '#CC0000';
+          }
+        });
+      },
+      drawDailyTriangleLegendWord: function(legend, data) {
+        var that;
+        that = this;
+        return legend.selectAll('dailyTriangleLegend').data(data).enter().append('svg:path').attr('d', function(d) {
+          return that.getDailyTrianglePath(d.trianglesLegendData.dailyTrianglesLegendData.isUp);
+        }).attr('transform', function(d) {
+          var x, y;
+          x = 10;
+          if (d.trianglesLegendData.dailyTrianglesLegendData.isUp === true) {
+            y = 48;
+          } else {
+            y = 52;
+          }
+          return 'translate(' + x + ',' + y + ')';
+        }).attr('fill', '#FFFFFF');
+      },
+      drawDailyTriangleLegendText: function(legend, data) {
+        var that;
+        that = this;
+        return legend.selectAll('dailyTriangleLegend').data(data).enter().append('svg:text').attr({
+          'font-family': 'Courier'
+        }).attr({
+          'font-size': 12
+        }).attr({
+          'transform': 'translate(35, 62)'
+        }).attr({
+          'text-rendering': 'geometric-precision'
+        }).text(function(d) {
+          return d.trianglesLegendData.dailyTrianglesLegendData.value;
+        });
+      },
+      drawTraingleLegendDivider: function(legend, data) {
+        return legend.selectAll('dividerTriangleLegend').data(data).enter().append('svg:line').attr({
+          x1: 5,
+          x2: 105,
+          y1: 70,
+          y2: 70,
+          stroke: '#DDDDDD'
+        });
+      },
+      drawTriangleLegendScoreLabel: function(legend, data) {
+        return legend.selectAll('scoreTriangleLegend').data(data).enter().append('svg:text').attr({
+          'font-family': 'Courier'
+        }).attr({
+          'font-size': 14
+        }).attr({
+          'transform': 'translate(10, 85)'
+        }).attr({
+          'text-rendering': 'geometric-precision'
+        }).attr('font-weight', 'bolder').text('Score');
+      },
+      drawTriangleLegendScoreData: function(legend, data) {
+        return legend.selectAll('scoreTriangleLegend').data(data).enter().append('svg:text').attr({
+          'font-family': 'Courier'
+        }).attr({
+          'font-size': 14
+        }).attr({
+          'transform': 'translate(55, 85)'
+        }).attr({
+          'text-rendering': 'geometric-precision'
+        }).attr('font-weight', 'bolder').attr({
+          'fill': function(d) {
+            if (d.trianglesLegendData.scoreLegendData.isUp === true) {
+              return '#43A943';
+            } else {
+              return '#CA2F2F';
+            }
+          }
+        }).text(function(d) {
+          if (d.trianglesLegendData.scoreLegendData.isUp === true) {
+            return '+' + d.trianglesLegendData.scoreLegendData.value;
+          } else {
+            return d.trianglesLegendData.scoreLegendData.value;
+          }
+        });
       }
     };
   }

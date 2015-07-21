@@ -211,6 +211,12 @@
 
           if s.type is 'dailyTriangles'
             seriesData.dailyTrianglesData = s.dailyTrianglesData
+          if s.type is 'weeklyTriangles'
+            seriesData.weeklyTrianglesData = s.weeklyTrianglesData
+          if s.type is 'monthlyTriangles'
+            seriesData.monthlyTrianglesData = s.monthlyTrianglesData
+          if s.type is 'trianglesLegend'
+            seriesData.trianglesLegendData = s.trianglesLegendData
 
           return seriesData
 
