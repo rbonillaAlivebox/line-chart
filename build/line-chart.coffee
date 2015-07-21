@@ -2436,9 +2436,9 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         return this
 
       legend = svg.select('.content').selectAll('.trianglesLegend')
-      .data(data)
-      .enter().append('g')
-      .attr('class', 'trianglesLegend')
+        .data(data)
+        .enter().append('g')
+        .attr('class', 'trianglesLegend')
 
       this.drawTriangleLegendRectangle(legend, data)
 
@@ -2472,51 +2472,51 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
     drawMonthlyTriangleLegendPolygon: (legend, data) ->
       that = this
       legend.selectAll('monthlyTriangleLegend').data(data)
-      .enter().append('svg:polygon')
-      .attr(
-        'points', (d) -> that.getTrianglePoints(d.trianglesLegendData.monthlyTrianglesLegendData.isUp)
-      )
-      .attr('transform', (d) ->
-        x = 10
-        if d.trianglesLegendData.monthlyTrianglesLegendData.isUp is true
-          y = 8
-        else
-          y = 12
-        return 'translate('+ x + ',' + y + ')'
-      )
-      .attr('fill', (d) ->
-        if d.trianglesLegendData.monthlyTrianglesLegendData.isUp is true
-          return '#009933'
-        else
-          return '#CC0000'
-      )
+        .enter().append('svg:polygon')
+        .attr(
+          'points', (d) -> that.getTrianglePoints(d.trianglesLegendData.monthlyTrianglesLegendData.isUp)
+        )
+        .attr('transform', (d) ->
+          x = 10
+          if d.trianglesLegendData.monthlyTrianglesLegendData.isUp is true
+            y = 8
+          else
+            y = 12
+          return 'translate('+ x + ',' + y + ')'
+        )
+        .attr('fill', (d) ->
+          if d.trianglesLegendData.monthlyTrianglesLegendData.isUp is true
+            return '#009933'
+          else
+            return '#CC0000'
+        )
 
     drawMonthlyTriangleLegendWord: (legend, data) ->
       that = this
       legend.selectAll('monthlyTriangleLegend').data(data)
-      .enter().append('svg:path')
-      .attr(
-        'd', (d) -> that.getMonthlyTrianglePath(d.trianglesLegendData.monthlyTrianglesLegendData.isUp)
-      )
-      .attr('transform', (d) ->
-        x = 10
-        if d.trianglesLegendData.monthlyTrianglesLegendData.isUp is true
-          y = 8
-        else
-          y = 12
-        return 'translate('+ x + ',' + y + ')'
-      )
-      .attr('fill', '#FFFFFF')
+        .enter().append('svg:path')
+        .attr(
+          'd', (d) -> that.getMonthlyTrianglePath(d.trianglesLegendData.monthlyTrianglesLegendData.isUp)
+        )
+        .attr('transform', (d) ->
+          x = 10
+          if d.trianglesLegendData.monthlyTrianglesLegendData.isUp is true
+            y = 8
+          else
+            y = 12
+          return 'translate('+ x + ',' + y + ')'
+        )
+        .attr('fill', '#FFFFFF')
 
     drawMonthlyTriangleLegendText: (legend, data) ->
       that = this
       legend.selectAll('monthlyTriangleLegend').data(data)
-      .enter().append('svg:text')
-      .attr('font-family': 'Courier')
-      .attr('font-size': 12)
-      .attr('transform': 'translate(35, 22)')
-      .attr('text-rendering': 'geometric-precision')
-      .text((d)-> d.trianglesLegendData.monthlyTrianglesLegendData.value)
+        .enter().append('svg:text')
+        .attr('font-family': 'Courier')
+        .attr('font-size': 12)
+        .attr('transform': 'translate(35, 22)')
+        .attr('text-rendering': 'geometric-precision')
+        .text((d)-> d.trianglesLegendData.monthlyTrianglesLegendData.value)
 
     drawWeeklyTriangleLegendPolygon: (legend, data) ->
       that = this
@@ -2570,51 +2570,51 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
     drawDailyTriangleLegendPolygon: (legend, data) ->
       that = this
       legend.selectAll('dailyTriangleLegend').data(data)
-      .enter().append('svg:polygon')
-      .attr(
-        'points', (d) -> that.getTrianglePoints(d.trianglesLegendData.dailyTrianglesLegendData.isUp)
-      )
-      .attr('transform', (d) ->
-        x = 10
-        if d.trianglesLegendData.dailyTrianglesLegendData.isUp is true
-          y = 48
-        else
-          y = 52
-        return 'translate('+ x + ',' + y + ')'
-      )
-      .attr('fill', (d) ->
-        if d.trianglesLegendData.dailyTrianglesLegendData.isUp is true
-          return '#009933'
-        else
-          return '#CC0000'
-      )
+        .enter().append('svg:polygon')
+        .attr(
+          'points', (d) -> that.getTrianglePoints(d.trianglesLegendData.dailyTrianglesLegendData.isUp)
+        )
+        .attr('transform', (d) ->
+          x = 10
+          if d.trianglesLegendData.dailyTrianglesLegendData.isUp is true
+            y = 48
+          else
+            y = 52
+          return 'translate('+ x + ',' + y + ')'
+        )
+        .attr('fill', (d) ->
+          if d.trianglesLegendData.dailyTrianglesLegendData.isUp is true
+            return '#009933'
+          else
+            return '#CC0000'
+        )
 
     drawDailyTriangleLegendWord: (legend, data) ->
       that = this
       legend.selectAll('dailyTriangleLegend').data(data)
-      .enter().append('svg:path')
-      .attr(
-        'd', (d) -> that.getDailyTrianglePath(d.trianglesLegendData.dailyTrianglesLegendData.isUp)
-      )
-      .attr('transform', (d) ->
-        x = 10
-        if d.trianglesLegendData.dailyTrianglesLegendData.isUp is true
-          y = 48
-        else
-          y = 52
-        return 'translate('+ x + ',' + y + ')'
-      )
-      .attr('fill', '#FFFFFF')
+        .enter().append('svg:path')
+        .attr(
+          'd', (d) -> that.getDailyTrianglePath(d.trianglesLegendData.dailyTrianglesLegendData.isUp)
+        )
+        .attr('transform', (d) ->
+          x = 10
+          if d.trianglesLegendData.dailyTrianglesLegendData.isUp is true
+            y = 48
+          else
+            y = 52
+          return 'translate('+ x + ',' + y + ')'
+        )
+        .attr('fill', '#FFFFFF')
 
     drawDailyTriangleLegendText: (legend, data) ->
       that = this
       legend.selectAll('dailyTriangleLegend').data(data)
-      .enter().append('svg:text')
-      .attr('font-family': 'Courier')
-      .attr('font-size': 12)
-      .attr('transform': 'translate(35, 62)')
-      .attr('text-rendering': 'geometric-precision')
-      .text((d)-> d.trianglesLegendData.dailyTrianglesLegendData.value)
+        .enter().append('svg:text')
+        .attr('font-family': 'Courier')
+        .attr('font-size': 12)
+        .attr('transform': 'translate(35, 62)')
+        .attr('text-rendering': 'geometric-precision')
+        .text((d)-> d.trianglesLegendData.dailyTrianglesLegendData.value)
 
     drawTraingleLegendDivider: (legend, data) ->
       legend.selectAll('dividerTriangleLegend').data(data)
@@ -2658,6 +2658,27 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
             return d.trianglesLegendData.scoreLegendData.value
         )
 
+# ----
+
+
+# src/utils/trianglesTooltip.coffee
+    drawTriangleTooltip: (svg, axes, data) ->
+      that = this
+
+      tooltip = svg.select('.content').selectAll('.trianglesTooltip')
+        .data(data)
+        .enter().append('g')
+        .attr('class', 'trianglesTooltip')
+
+    drawTriangleTooltipRectangle: (tooltip, data) ->
+      tooltip.selectAll('trianglesTooltipRect').data(data).enter().append('svg:rect')
+      .attr(
+          x: 0
+          y: 0
+          width: 100
+          height: 100
+          fill: '#F5F5F5'
+        )
 # ----
   }
 ])

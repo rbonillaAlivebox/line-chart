@@ -2630,6 +2630,20 @@ mod.factory('n3utils', [
             return d.trianglesLegendData.scoreLegendData.value;
           }
         });
+      },
+      drawTriangleTooltip: function(svg, axes, data) {
+        var that, tooltip;
+        that = this;
+        return tooltip = svg.select('.content').selectAll('.trianglesTooltip').data(data).enter().append('g').attr('class', 'trianglesTooltip');
+      },
+      drawTriangleTooltipRectangle: function(tooltip, data) {
+        return tooltip.selectAll('trianglesTooltipRect').data(data).enter().append('svg:rect').attr({
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+          fill: '#F5F5F5'
+        });
       }
     };
   }
