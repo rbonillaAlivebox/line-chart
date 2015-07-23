@@ -52,7 +52,7 @@
           position = series.values.indexOf(v)
           serieData = series.values[position]
           if options.tooltip.formatter
-            text = options.tooltip.formatter(v.x, v.y, options.series[index], serieData)
+            text = options.tooltip.formatter(v.x, v.y, options.series[index], serieData, index)
 
           if options.series[series.index].labelIsUpdatedWithTooltip
             that.updateTextLegendWithTooltip(svg, index, text)

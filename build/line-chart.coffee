@@ -68,7 +68,7 @@ directive('linechart', ['n3utils', '$window', '$timeout', (n3utils, $window, $ti
           .drawLines(svg, axes, dataPerSeries, options, handlers)
           .drawCandlestick(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions)
           .drawOhlc(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions)
-          #.drawIntraday(svg, axes, dataPerSeries, options, handlers, dimensions)
+          .drawIntraday(svg, axes, dataPerSeries, options, handlers, dimensions)
 
         if options.drawDots
           _u.drawDots(svg, axes, dataPerSeries, options, handlers, dispatch)
@@ -1762,7 +1762,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           position = series.values.indexOf(v)
           serieData = series.values[position]
           if options.tooltip.formatter
-            text = options.tooltip.formatter(v.x, v.y, options.series[index], serieData)
+            text = options.tooltip.formatter(v.x, v.y, options.series[index], serieData, index)
 
           if options.series[series.index].labelIsUpdatedWithTooltip
             that.updateTextLegendWithTooltip(svg, index, text)
@@ -2806,6 +2806,35 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
     triangleMouseOutHandler: (svg) ->
       tooltip = svg.select('.trianglesTooltip')
       tooltip.attr('opacity', 0)
+
+# ----
+
+
+# src/utils/txIntraday.coffee
+    drawIntraday: (svg, axes, data, options, handlers, dimensions) ->
+      that = this
+      data = data.filter (s) -> s.type is 'intraday'
+
+      if data.length == 0
+        return this
+
+      intradayChart = svg.select('.content').selectAll('intradayGroup')
+      .data(data)
+      .enter().append('g')
+      .attr('class', 'intradayGroup')
+
+      intradayChart.selectAll('line.stem').data((d) -> d.intradayData)
+      .enter().append('svg:line')
+      .attr('class', (d) -> 'stem')
+      .attr(
+        x1: (d) -> axes.xScale(d.x1)
+        x2: (d) -> axes.xScale(d.x2)
+        y1: (d) -> axes.y2Scale(d.y1)
+        y2: (d) -> axes.y2Scale(d.y2)
+      )
+      .attr('stroke', '#FF0000')
+
+      return this
 
 # ----
   }
