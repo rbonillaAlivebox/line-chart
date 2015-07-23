@@ -1,5 +1,5 @@
 ###
-line-chart - v1.1.10 - 22 July 2015
+line-chart - v1.1.10 - 23 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
 ###
@@ -68,6 +68,7 @@ directive('linechart', ['n3utils', '$window', '$timeout', (n3utils, $window, $ti
           .drawLines(svg, axes, dataPerSeries, options, handlers)
           .drawCandlestick(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions)
           .drawOhlc(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions)
+          #.drawIntraday(svg, axes, dataPerSeries, options, handlers, dimensions)
 
         if options.drawDots
           _u.drawDots(svg, axes, dataPerSeries, options, handlers, dispatch)
@@ -1017,6 +1018,8 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
             seriesData.monthlyTrianglesData = s.monthlyTrianglesData
           if s.type is 'trianglesLegend'
             seriesData.trianglesLegendData = s.trianglesLegendData
+          if s.type is 'intraday'
+            seriesData.intradayData = s.intradayData
 
           return seriesData
 
@@ -1289,7 +1292,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         options.forEach (s, i) ->
           s.axis = if s.axis?.toLowerCase() isnt 'y2' then 'y' else 'y2'
           s.color or= colors(i)
-          s.type = if s.type in ['line', 'area', 'column', 'candlestick', 'ohlc', 'dailyTriangles', 'weeklyTriangles', 'monthlyTriangles', 'trianglesLegend'] then s.type else "line"
+          s.type = if s.type in ['line', 'area', 'column', 'intraday', 'candlestick', 'ohlc', 'dailyTriangles', 'weeklyTriangles', 'monthlyTriangles', 'trianglesLegend'] then s.type else "line"
           s.labelIsClickable = if s.labelIsClickable in [true, false] then s.labelIsClickable else true
           s.iconIsVisible = if s.iconIsVisible in [true, false] then s.iconIsVisible else true
           s.labelIsVisible = if s.labelIsVisible in [true, false] then s.labelIsVisible else true
@@ -2698,6 +2701,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         .attr('opacity', 0)
         .data(data)
         .enter().append('g')
+        .on('mouseout', (d) -> that.triangleMouseOutHandler(svg))
 
       tooltip = svg.select('.trianglesTooltip').selectAll('trianglesTooltip')
       #tooltip = svg.select('.content').selectAll('.trianglesTooltip')

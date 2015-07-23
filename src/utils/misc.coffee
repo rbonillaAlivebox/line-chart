@@ -217,6 +217,8 @@
             seriesData.monthlyTrianglesData = s.monthlyTrianglesData
           if s.type is 'trianglesLegend'
             seriesData.trianglesLegendData = s.trianglesLegendData
+          if s.type is 'intraday'
+            seriesData.intradayData = s.intradayData
 
           return seriesData
 

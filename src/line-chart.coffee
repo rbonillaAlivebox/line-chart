@@ -62,6 +62,7 @@ directive('linechart', ['n3utils', '$window', '$timeout', (n3utils, $window, $ti
           .drawLines(svg, axes, dataPerSeries, options, handlers)
           .drawCandlestick(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions)
           .drawOhlc(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions)
+          #.drawIntraday(svg, axes, dataPerSeries, options, handlers, dimensions)
 
         if options.drawDots
           _u.drawDots(svg, axes, dataPerSeries, options, handlers, dispatch)

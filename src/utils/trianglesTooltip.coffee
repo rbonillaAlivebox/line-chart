@@ -11,6 +11,7 @@
         .attr('opacity', 0)
         .data(data)
         .enter().append('g')
+        .on('mouseout', (d) -> that.triangleMouseOutHandler(svg))
 
       tooltip = svg.select('.trianglesTooltip').selectAll('trianglesTooltip')
       #tooltip = svg.select('.content').selectAll('.trianglesTooltip')
