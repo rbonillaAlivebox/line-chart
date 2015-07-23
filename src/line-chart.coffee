@@ -62,7 +62,6 @@ directive('linechart', ['n3utils', '$window', '$timeout', (n3utils, $window, $ti
           .drawLines(svg, axes, dataPerSeries, options, handlers)
           .drawCandlestick(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions)
           .drawOhlc(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions)
-          .drawTriangles(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions)
 
         if options.drawDots
           _u.drawDots(svg, axes, dataPerSeries, options, handlers, dispatch)
@@ -74,6 +73,8 @@ directive('linechart', ['n3utils', '$window', '$timeout', (n3utils, $window, $ti
         _u.createGlass(svg, dimensions, handlers, axes, dataPerSeries, options, dispatch, columnWidth)
       else if options.tooltip.mode isnt 'none'
         _u.addTooltips(svg, dimensions, options.axes)
+
+      _u.drawTriangles(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions)
 
     updateEvents = ->
 

@@ -1,6 +1,6 @@
 
 /*
-line-chart - v1.1.10 - 21 July 2015
+line-chart - v1.1.10 - 22 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
  */
@@ -64,7 +64,7 @@ directive('linechart', [
         _u.createContent(svg, id, options, handlers);
         if (dataPerSeries.length) {
           columnWidth = _u.getBestColumnWidth(axes, dimensions, dataPerSeries, options);
-          _u.drawArea(svg, axes, dataPerSeries, options, handlers).drawColumns(svg, axes, dataPerSeries, columnWidth, options, handlers, dispatch).drawLines(svg, axes, dataPerSeries, options, handlers).drawCandlestick(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions).drawOhlc(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions).drawTriangles(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions);
+          _u.drawArea(svg, axes, dataPerSeries, options, handlers).drawColumns(svg, axes, dataPerSeries, columnWidth, options, handlers, dispatch).drawLines(svg, axes, dataPerSeries, options, handlers).drawCandlestick(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions).drawOhlc(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions);
           if (options.drawDots) {
             _u.drawDots(svg, axes, dataPerSeries, options, handlers, dispatch);
           }
@@ -73,10 +73,11 @@ directive('linechart', [
           _u.drawLegend(svg, options.series, dimensions, handlers, dispatch);
         }
         if (options.tooltip.mode === 'scrubber') {
-          return _u.createGlass(svg, dimensions, handlers, axes, dataPerSeries, options, dispatch, columnWidth);
+          _u.createGlass(svg, dimensions, handlers, axes, dataPerSeries, options, dispatch, columnWidth);
         } else if (options.tooltip.mode !== 'none') {
-          return _u.addTooltips(svg, dimensions, options.axes);
+          _u.addTooltips(svg, dimensions, options.axes);
         }
+        return _u.drawTriangles(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions);
       };
       updateEvents = function() {
         if (scope.oldclick) {
@@ -2137,6 +2138,7 @@ mod.factory('n3utils', [
         this.drawWeeklyTriangles(svg, axes, data);
         this.drawMonthlyTriangles(svg, axes, data);
         this.drawTriangleLegend(svg, axes, data);
+        this.drawTriangleTooltip(svg, axes, data);
         return this;
       },
       drawDailyTriangles: function(svg, axes, data) {
@@ -2148,13 +2150,14 @@ mod.factory('n3utils', [
         if (data.length === 0 || data[0].dailyTrianglesData === null || data[0].dailyTrianglesData.length === 0) {
           return this;
         }
-        triangleGroup = svg.select('.content').selectAll('.dailyTrianglesGroup').data(data).enter().append('g').attr('class', function(s) {
+        svg.append('g').attr('class', 'dailyTrianglesGroup').data(data).enter().append('g');
+        triangleGroup = svg.select('.dailyTrianglesGroup').selectAll('dailyTrianglesGroup').data(data).enter().append('g').attr('class', function(s) {
           return 'dailyTrianglesGroup series_' + s.index;
         });
-        this.drawDailyTrianglePolygons(triangleGroup, axes);
-        return this.drawDailyTriangleWords(triangleGroup, axes);
+        this.drawDailyTrianglePolygons(svg, triangleGroup, axes);
+        return this.drawDailyTriangleWords(svg, triangleGroup, axes);
       },
-      drawDailyTrianglePolygons: function(triangleGroup, axes) {
+      drawDailyTrianglePolygons: function(svg, triangleGroup, axes) {
         var that;
         that = this;
         return triangleGroup.selectAll('dailyTriangles').data(function(d) {
@@ -2184,9 +2187,13 @@ mod.factory('n3utils', [
           } else {
             return '#CC0000';
           }
+        }).on('mouseover', function(d) {
+          return that.triangleMouseOverHandler(svg, axes, d);
+        }).on('mouseout', function(d) {
+          return that.triangleMouseOutHandler(svg);
         });
       },
-      drawDailyTriangleWords: function(triangleGroup, axes) {
+      drawDailyTriangleWords: function(svg, triangleGroup, axes) {
         var that;
         that = this;
         return triangleGroup.selectAll('dailyWords').data(function(d) {
@@ -2210,7 +2217,9 @@ mod.factory('n3utils', [
             }
           }
           return 'translate(' + x + ',' + y + ')';
-        }).attr('fill', '#FFFFFF');
+        }).attr('fill', '#FFFFFF').on('mouseover', function(d) {
+          return that.triangleMouseOverHandler(svg, axes, d);
+        });
       },
       getDailyTrianglePath: function(isUp) {
         var path;
@@ -2230,13 +2239,14 @@ mod.factory('n3utils', [
         if (data.length === 0 || data[0].weeklyTrianglesData === null || data[0].weeklyTrianglesData.length === 0) {
           return this;
         }
-        triangleGroup = svg.select('.content').selectAll('.weeklyTrianglesGroup').data(data).enter().append('g').attr('class', function(s) {
+        svg.append('g').attr('class', 'weeklyTrianglesGroup').data(data).enter().append('g');
+        triangleGroup = svg.select('.weeklyTrianglesGroup').selectAll('weeklyTrianglesGroup').data(data).enter().append('g').attr('class', function(s) {
           return 'weeklyTrianglesGroup series_' + s.index;
         });
-        this.drawWeeklyTrianglePolygons(triangleGroup, axes);
-        return this.drawWeeklyTriangleWords(triangleGroup, axes);
+        this.drawWeeklyTrianglePolygons(svg, triangleGroup, axes);
+        return this.drawWeeklyTriangleWords(svg, triangleGroup, axes);
       },
-      drawWeeklyTrianglePolygons: function(triangleGroup, axes) {
+      drawWeeklyTrianglePolygons: function(svg, triangleGroup, axes) {
         var that;
         that = this;
         return triangleGroup.selectAll('weeklyTriangles').data(function(d) {
@@ -2266,9 +2276,13 @@ mod.factory('n3utils', [
           } else {
             return '#CC0000';
           }
+        }).on('mouseover', function(d) {
+          return that.triangleMouseOverHandler(svg, axes, d);
+        }).on('mouseout', function(d) {
+          return that.triangleMouseOutHandler(svg);
         });
       },
-      drawWeeklyTriangleWords: function(triangleGroup, axes) {
+      drawWeeklyTriangleWords: function(svg, triangleGroup, axes) {
         var that;
         that = this;
         return triangleGroup.selectAll('weeklyWords').data(function(d) {
@@ -2292,7 +2306,9 @@ mod.factory('n3utils', [
             }
           }
           return 'translate(' + x + ',' + y + ')';
-        }).attr('fill', '#FFFFFF');
+        }).attr('fill', '#FFFFFF').on('mouseover', function(d) {
+          return that.triangleMouseOverHandler(svg, axes, d);
+        });
       },
       getWeeklyTrianglePath: function(isUp) {
         var path;
@@ -2312,13 +2328,14 @@ mod.factory('n3utils', [
         if (data.length === 0 || data[0].monthlyTrianglesData === null || data[0].monthlyTrianglesData.length === 0) {
           return this;
         }
-        triangleGroup = svg.select('.content').selectAll('.monthlyTrianglesGroup').data(data).enter().append('g').attr('class', function(s) {
+        svg.append('g').attr('class', 'monthlyTrianglesGroup').data(data).enter().append('g');
+        triangleGroup = svg.select('.monthlyTrianglesGroup').selectAll('monthlyTrianglesGroup').data(data).enter().append('g').attr('class', function(s) {
           return 'monthlyTrianglesGroup series_' + s.index;
         });
-        this.drawMonthlyTrianglePolygons(triangleGroup, axes);
-        return this.drawMonthlyTriangleWords(triangleGroup, axes);
+        this.drawMonthlyTrianglePolygons(svg, triangleGroup, axes);
+        return this.drawMonthlyTriangleWords(svg, triangleGroup, axes);
       },
-      drawMonthlyTrianglePolygons: function(triangleGroup, axes) {
+      drawMonthlyTrianglePolygons: function(svg, triangleGroup, axes) {
         var that;
         that = this;
         return triangleGroup.selectAll('monthlyTriangles').data(function(d) {
@@ -2348,9 +2365,13 @@ mod.factory('n3utils', [
           } else {
             return '#CC0000';
           }
+        }).on('mouseover', function(d) {
+          return that.triangleMouseOverHandler(svg, axes, d);
+        }).on('mouseout', function(d) {
+          return that.triangleMouseOutHandler(svg);
         });
       },
-      drawMonthlyTriangleWords: function(triangleGroup, axes) {
+      drawMonthlyTriangleWords: function(svg, triangleGroup, axes) {
         var that;
         that = this;
         return triangleGroup.selectAll('monthlyWords').data(function(d) {
@@ -2374,7 +2395,9 @@ mod.factory('n3utils', [
             }
           }
           return 'translate(' + x + ',' + y + ')';
-        }).attr('fill', '#FFFFFF');
+        }).attr('fill', '#FFFFFF').on('mouseover', function(d) {
+          return that.triangleMouseOverHandler(svg, axes, d);
+        });
       },
       getMonthlyTrianglePath: function(isUp) {
         var path;
@@ -2634,16 +2657,105 @@ mod.factory('n3utils', [
       drawTriangleTooltip: function(svg, axes, data) {
         var that, tooltip;
         that = this;
-        return tooltip = svg.select('.content').selectAll('.trianglesTooltip').data(data).enter().append('g').attr('class', 'trianglesTooltip');
+        data = data.filter(function(s) {
+          return s.type === 'trianglesLegend';
+        });
+        if (data.length === 0 || data[0].trianglesLegendData === null || data[0].trianglesLegendData === void 0) {
+          return this;
+        }
+        svg.append('g').attr('class', 'trianglesTooltip').attr('transform', 'translate(0, 0)').attr('opacity', 0).data(data).enter().append('g');
+        tooltip = svg.select('.trianglesTooltip').selectAll('trianglesTooltip').data(data).enter().append('g');
+        this.drawTriangleTooltipRectangle(tooltip, data);
+        this.drawTriangleTooltipPositiveLine(tooltip, data);
+        this.drawTriangleTooltipNegativeLine(tooltip, data);
+        this.drawTriangleTooltipDateText(tooltip, data);
+        return this.drawTriangleTooltipDataText(tooltip, data);
       },
       drawTriangleTooltipRectangle: function(tooltip, data) {
         return tooltip.selectAll('trianglesTooltipRect').data(data).enter().append('svg:rect').attr({
           x: 0,
           y: 0,
           width: 100,
-          height: 100,
+          height: 45,
           fill: '#F5F5F5'
         });
+      },
+      drawTriangleTooltipPositiveLine: function(tooltip, data) {
+        return tooltip.selectAll('trianglesTooltipPositiveLine').data(data).enter().append('svg:line').attr('class', 'trianglesTooltipPositiveLine').attr('opacity', 0).attr({
+          x1: 0,
+          y1: 0,
+          x2: 100,
+          y2: 0,
+          stroke: '#009933'
+        }).attr('stroke-width', 4);
+      },
+      drawTriangleTooltipNegativeLine: function(tooltip, data) {
+        return tooltip.selectAll('trianglesTooltipNegativeLine').data(data).enter().append('svg:line').attr('class', 'trianglesTooltipNegativeLine').attr('opacity', 0).attr({
+          x1: 0,
+          y1: 44,
+          x2: 100,
+          y2: 44,
+          stroke: '#CC0000'
+        }).attr('stroke-width', 4);
+      },
+      drawTriangleTooltipDateText: function(tooltip, data) {
+        return tooltip.selectAll('trianglesTooltipDateText').data(data).enter().append('svg:text').attr('class', 'trianglesTooltipDateText').attr({
+          'font-family': 'Courier'
+        }).attr({
+          'font-size': 12
+        }).attr({
+          'transform': 'translate(32, 17)'
+        }).attr({
+          'text-rendering': 'geometric-precision'
+        }).text(' ');
+      },
+      drawTriangleTooltipDataText: function(tooltip, data) {
+        return tooltip.selectAll('trianglesTooltipDataText').data(data).enter().append('svg:text').attr('class', 'trianglesTooltipDataText').attr({
+          'font-family': 'Courier'
+        }).attr({
+          'font-size': 12
+        }).attr({
+          'transform': 'translate(12, 35)'
+        }).attr({
+          'text-rendering': 'geometric-precision'
+        }).text('');
+      },
+      triangleMouseOverHandler: function(svg, axes, data) {
+        var dataText, dateText, tooltip, tooltipNegativeLine, tooltipPositiveLine, x, y;
+        tooltip = svg.select('.trianglesTooltip');
+        tooltipPositiveLine = svg.select('.trianglesTooltipPositiveLine');
+        tooltipNegativeLine = svg.select('.trianglesTooltipNegativeLine');
+        if (data.isUp === true) {
+          tooltipPositiveLine.attr('opacity', 1);
+          tooltipNegativeLine.attr('opacity', 0);
+        } else {
+          tooltipPositiveLine.attr('opacity', 0);
+          tooltipNegativeLine.attr('opacity', 1);
+        }
+        x = axes.xScale(data.x) - 50;
+        if (data.chartType === 'Line') {
+          if (data.isUp === true) {
+            y = axes.y2Scale(data.closeValue) + 19;
+          } else {
+            y = axes.y2Scale(data.closeValue) - 61;
+          }
+        } else {
+          if (data.isUp === true) {
+            y = axes.y2Scale(data.lowValue) + 18;
+          } else {
+            y = axes.y2Scale(data.highValue) - 61;
+          }
+        }
+        tooltip.attr('opacity', 1).attr('transform', 'translate(' + x + ', ' + y + ')');
+        dateText = svg.select('.trianglesTooltipDateText');
+        dateText.text(data.dateFormattedValue);
+        dataText = svg.select('.trianglesTooltipDataText');
+        return dataText.text(data.triangleValue);
+      },
+      triangleMouseOutHandler: function(svg) {
+        var tooltip;
+        tooltip = svg.select('.trianglesTooltip');
+        return tooltip.attr('opacity', 0);
       }
     };
   }

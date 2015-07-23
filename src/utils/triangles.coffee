@@ -3,6 +3,7 @@
       this.drawWeeklyTriangles(svg, axes, data)
       this.drawMonthlyTriangles(svg, axes, data)
       this.drawTriangleLegend(svg, axes, data)
+      this.drawTriangleTooltip(svg, axes, data)
       return this
 
     drawDailyTriangles: (svg, axes, data) ->
@@ -13,15 +14,19 @@
       if data.length == 0 or data[0].dailyTrianglesData is null or data[0].dailyTrianglesData.length == 0
         return this
 
-      triangleGroup = svg.select('.content').selectAll('.dailyTrianglesGroup')
+      svg.append('g').attr('class', 'dailyTrianglesGroup')
+        .data(data)
+        .enter().append('g')
+
+      triangleGroup = svg.select('.dailyTrianglesGroup').selectAll('dailyTrianglesGroup')
         .data(data)
         .enter().append('g')
         .attr('class', (s) -> 'dailyTrianglesGroup series_' + s.index)
 
-      this.drawDailyTrianglePolygons(triangleGroup, axes)
-      this.drawDailyTriangleWords(triangleGroup, axes)
+      this.drawDailyTrianglePolygons(svg, triangleGroup, axes)
+      this.drawDailyTriangleWords(svg, triangleGroup, axes)
 
-    drawDailyTrianglePolygons: (triangleGroup, axes) ->
+    drawDailyTrianglePolygons: (svg, triangleGroup, axes) ->
       that = this
 
       triangleGroup.selectAll('dailyTriangles').data((d) -> d.dailyTrianglesData)
@@ -49,30 +54,33 @@
           else
             return '#CC0000'
         )
+        .on('mouseover', (d) -> that.triangleMouseOverHandler(svg, axes, d))
+        .on('mouseout', (d) -> that.triangleMouseOutHandler(svg))
 
-    drawDailyTriangleWords: (triangleGroup, axes) ->
+    drawDailyTriangleWords: (svg, triangleGroup, axes) ->
       that = this
 
       triangleGroup.selectAll('dailyWords').data((d) -> d.dailyTrianglesData)
-      .enter().append('svg:path')
-      .attr(
-        'd', (d) -> that.getDailyTrianglePath(d.isUp)
-      )
-      .attr('transform', (d) ->
-        x = axes.xScale(d.x) - 8
-        if d.chartType is 'Line'
-          if d.isUp is true
-            y = axes.y2Scale(d.closeValue) + 2
+        .enter().append('svg:path')
+        .attr(
+          'd', (d) -> that.getDailyTrianglePath(d.isUp)
+        )
+        .attr('transform', (d) ->
+          x = axes.xScale(d.x) - 8
+          if d.chartType is 'Line'
+            if d.isUp is true
+              y = axes.y2Scale(d.closeValue) + 2
+            else
+              y = axes.y2Scale(d.closeValue) - 16
           else
-            y = axes.y2Scale(d.closeValue) - 16
-        else
-          if d.isUp is true
-            y = axes.y2Scale(d.lowValue) + 1
-          else
-            y = axes.y2Scale(d.highValue) - 16
-        return 'translate('+ x + ',' + y + ')'
-      )
-      .attr('fill', '#FFFFFF')
+            if d.isUp is true
+              y = axes.y2Scale(d.lowValue) + 1
+            else
+              y = axes.y2Scale(d.highValue) - 16
+          return 'translate('+ x + ',' + y + ')'
+        )
+        .attr('fill', '#FFFFFF')
+        .on('mouseover', (d) -> that.triangleMouseOverHandler(svg, axes, d))
 
     getDailyTrianglePath: (isUp) ->
       if isUp is true
@@ -97,66 +105,73 @@
       if data.length == 0 or data[0].weeklyTrianglesData is null or data[0].weeklyTrianglesData.length == 0
         return this
 
-      triangleGroup = svg.select('.content').selectAll('.weeklyTrianglesGroup')
-      .data(data)
-      .enter().append('g')
-      .attr('class', (s) -> 'weeklyTrianglesGroup series_' + s.index)
+      svg.append('g').attr('class', 'weeklyTrianglesGroup')
+        .data(data)
+        .enter().append('g')
 
-      this.drawWeeklyTrianglePolygons(triangleGroup, axes)
-      this.drawWeeklyTriangleWords(triangleGroup, axes)
+      triangleGroup = svg.select('.weeklyTrianglesGroup').selectAll('weeklyTrianglesGroup')
+        .data(data)
+        .enter().append('g')
+        .attr('class', (s) -> 'weeklyTrianglesGroup series_' + s.index)
 
-    drawWeeklyTrianglePolygons: (triangleGroup, axes) ->
+      this.drawWeeklyTrianglePolygons(svg, triangleGroup, axes)
+      this.drawWeeklyTriangleWords(svg, triangleGroup, axes)
+
+    drawWeeklyTrianglePolygons: (svg, triangleGroup, axes) ->
       that = this
 
       triangleGroup.selectAll('weeklyTriangles').data((d) -> d.weeklyTrianglesData)
-      .enter().append('svg:polygon')
-      .attr(
-        'points', (d) -> that.getTrianglePoints(d.isUp)
-      )
-      .attr('transform', (d) ->
-        x = axes.xScale(d.x) - 8
-        if d.chartType is 'Line'
-          if d.isUp is true
-            y = axes.y2Scale(d.closeValue) + 2
+        .enter().append('svg:polygon')
+        .attr(
+          'points', (d) -> that.getTrianglePoints(d.isUp)
+        )
+        .attr('transform', (d) ->
+          x = axes.xScale(d.x) - 8
+          if d.chartType is 'Line'
+            if d.isUp is true
+              y = axes.y2Scale(d.closeValue) + 2
+            else
+              y = axes.y2Scale(d.closeValue) - 16
           else
-            y = axes.y2Scale(d.closeValue) - 16
-        else
+            if d.isUp is true
+              y = axes.y2Scale(d.lowValue) + 1
+            else
+              y = axes.y2Scale(d.highValue) - 16
+          return 'translate('+ x + ',' + y + ')'
+        )
+        .attr('fill', (d) ->
           if d.isUp is true
-            y = axes.y2Scale(d.lowValue) + 1
+            return '#009933'
           else
-            y = axes.y2Scale(d.highValue) - 16
-        return 'translate('+ x + ',' + y + ')'
-      )
-      .attr('fill', (d) ->
-        if d.isUp is true
-          return '#009933'
-        else
-          return '#CC0000'
-      )
+            return '#CC0000'
+        )
+        .on('mouseover', (d) -> that.triangleMouseOverHandler(svg, axes, d))
+        .on('mouseout', (d) -> that.triangleMouseOutHandler(svg))
 
-    drawWeeklyTriangleWords: (triangleGroup, axes) ->
+    drawWeeklyTriangleWords: (svg, triangleGroup, axes) ->
       that = this
 
       triangleGroup.selectAll('weeklyWords').data((d) -> d.weeklyTrianglesData)
-      .enter().append('svg:path')
-      .attr(
-        'd', (d) -> that.getWeeklyTrianglePath(d.isUp)
-      )
-      .attr('transform', (d) ->
-        x = axes.xScale(d.x) - 8
-        if d.chartType is 'Line'
-          if d.isUp is true
-            y = axes.y2Scale(d.closeValue) + 2
+        .enter().append('svg:path')
+        .attr(
+          'd', (d) -> that.getWeeklyTrianglePath(d.isUp)
+        )
+        .attr('transform', (d) ->
+          x = axes.xScale(d.x) - 8
+          if d.chartType is 'Line'
+            if d.isUp is true
+              y = axes.y2Scale(d.closeValue) + 2
+            else
+              y = axes.y2Scale(d.closeValue) - 16
           else
-            y = axes.y2Scale(d.closeValue) - 16
-        else
-          if d.isUp is true
-            y = axes.y2Scale(d.lowValue) + 1
-          else
-            y = axes.y2Scale(d.highValue) - 16
-        return 'translate('+ x + ',' + y + ')'
-      )
-      .attr('fill', '#FFFFFF')
+            if d.isUp is true
+              y = axes.y2Scale(d.lowValue) + 1
+            else
+              y = axes.y2Scale(d.highValue) - 16
+          return 'translate('+ x + ',' + y + ')'
+        )
+        .attr('fill', '#FFFFFF')
+        .on('mouseover', (d) -> that.triangleMouseOverHandler(svg, axes, d))
 
     getWeeklyTrianglePath: (isUp) ->
       if isUp is true
@@ -175,66 +190,73 @@
       if data.length == 0 or data[0].monthlyTrianglesData is null or data[0].monthlyTrianglesData.length == 0
         return this
 
-      triangleGroup = svg.select('.content').selectAll('.monthlyTrianglesGroup')
-      .data(data)
-      .enter().append('g')
-      .attr('class', (s) -> 'monthlyTrianglesGroup series_' + s.index)
+      svg.append('g').attr('class', 'monthlyTrianglesGroup')
+        .data(data)
+        .enter().append('g')
 
-      this.drawMonthlyTrianglePolygons(triangleGroup, axes)
-      this.drawMonthlyTriangleWords(triangleGroup, axes)
+      triangleGroup = svg.select('.monthlyTrianglesGroup').selectAll('monthlyTrianglesGroup')
+        .data(data)
+        .enter().append('g')
+        .attr('class', (s) -> 'monthlyTrianglesGroup series_' + s.index)
 
-    drawMonthlyTrianglePolygons: (triangleGroup, axes) ->
+      this.drawMonthlyTrianglePolygons(svg, triangleGroup, axes)
+      this.drawMonthlyTriangleWords(svg, triangleGroup, axes)
+
+    drawMonthlyTrianglePolygons: (svg, triangleGroup, axes) ->
       that = this
 
       triangleGroup.selectAll('monthlyTriangles').data((d) -> d.monthlyTrianglesData)
-      .enter().append('svg:polygon')
-      .attr(
-        'points', (d) -> that.getTrianglePoints(d.isUp)
-      )
-      .attr('transform', (d) ->
-        x = axes.xScale(d.x) - 8
-        if d.chartType is 'Line'
-          if d.isUp is true
-            y = axes.y2Scale(d.closeValue) + 2
+        .enter().append('svg:polygon')
+        .attr(
+          'points', (d) -> that.getTrianglePoints(d.isUp)
+        )
+        .attr('transform', (d) ->
+          x = axes.xScale(d.x) - 8
+          if d.chartType is 'Line'
+            if d.isUp is true
+              y = axes.y2Scale(d.closeValue) + 2
+            else
+              y = axes.y2Scale(d.closeValue) - 16
           else
-            y = axes.y2Scale(d.closeValue) - 16
-        else
+            if d.isUp is true
+              y = axes.y2Scale(d.lowValue) + 1
+            else
+              y = axes.y2Scale(d.highValue) - 16
+          return 'translate('+ x + ',' + y + ')'
+        )
+        .attr('fill', (d) ->
           if d.isUp is true
-            y = axes.y2Scale(d.lowValue) + 1
+            return '#009933'
           else
-            y = axes.y2Scale(d.highValue) - 16
-        return 'translate('+ x + ',' + y + ')'
-      )
-      .attr('fill', (d) ->
-        if d.isUp is true
-          return '#009933'
-        else
-          return '#CC0000'
-      )
+            return '#CC0000'
+        )
+        .on('mouseover', (d) -> that.triangleMouseOverHandler(svg, axes, d))
+        .on('mouseout', (d) -> that.triangleMouseOutHandler(svg))
 
-    drawMonthlyTriangleWords: (triangleGroup, axes) ->
+    drawMonthlyTriangleWords: (svg, triangleGroup, axes) ->
       that = this
 
       triangleGroup.selectAll('monthlyWords').data((d) -> d.monthlyTrianglesData)
-      .enter().append('svg:path')
-      .attr(
-        'd', (d) -> that.getMonthlyTrianglePath(d.isUp)
-      )
-      .attr('transform', (d) ->
-        x = axes.xScale(d.x) - 8
-        if d.chartType is 'Line'
-          if d.isUp is true
-            y = axes.y2Scale(d.closeValue) + 2
+        .enter().append('svg:path')
+        .attr(
+          'd', (d) -> that.getMonthlyTrianglePath(d.isUp)
+        )
+        .attr('transform', (d) ->
+          x = axes.xScale(d.x) - 8
+          if d.chartType is 'Line'
+            if d.isUp is true
+              y = axes.y2Scale(d.closeValue) + 2
+            else
+              y = axes.y2Scale(d.closeValue) - 16
           else
-            y = axes.y2Scale(d.closeValue) - 16
-        else
-          if d.isUp is true
-            y = axes.y2Scale(d.lowValue) + 1
-          else
-            y = axes.y2Scale(d.highValue) - 16
-        return 'translate('+ x + ',' + y + ')'
-      )
-      .attr('fill', '#FFFFFF')
+            if d.isUp is true
+              y = axes.y2Scale(d.lowValue) + 1
+            else
+              y = axes.y2Scale(d.highValue) - 16
+          return 'translate('+ x + ',' + y + ')'
+        )
+        .attr('fill', '#FFFFFF')
+        .on('mouseover', (d) -> that.triangleMouseOverHandler(svg, axes, d))
 
     getMonthlyTrianglePath: (isUp) ->
       if isUp is true
