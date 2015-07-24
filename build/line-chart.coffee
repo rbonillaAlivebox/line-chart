@@ -887,10 +887,35 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
       createGlass: (svg, dimensions, handlers, axes, data, options, dispatch, columnWidth) ->
         that = this
 
+        width = dimensions.width - dimensions.left - dimensions.right
+        height = dimensions.height - dimensions.top - dimensions.bottom
+
         glass = svg.append('g')
           .attr(
             'class': 'glass-container'
             'opacity': 0
+          )
+
+        glass.append('svg:line')
+          .attr(
+            'class': (s, i) -> "scrubberXLine"
+            'x1': 0
+            'x2': width
+            'y1': axes['y2Scale']
+            'y2': axes['y2Scale']
+            'stroke': 'green'
+            'stroke-width': '1px'
+          )
+
+        glass.append('svg:line')
+          .attr(
+            'class': (s, i) -> "scrubberYLine"
+            'x1': axes['xScale']
+            'x2': axes['xScale']
+            'y1': 0
+            'y2': height
+            'stroke': 'green'
+            'stroke-width': '1px'
           )
 
         scrubberGroup = glass.selectAll('.scrubberItem')
@@ -1814,8 +1839,8 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           item.selectAll('path').attr('fill', color)
 
         positions = this.preventOverlapping(positions)
-
         tickLength = Math.max(15, 100/columnWidth)
+        xOffSet = 0
 
         data.forEach (series, index) ->
           if options.series[index].visible is false
@@ -1857,6 +1882,21 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
               translate(#{positions[index].x + series.xOffset}, #{positions[index].y})
             """
           )
+          xOffSet = series.xOffset
+
+        xLineItem = svg.select('.scrubberXLine')
+        ease(xLineItem).attr(
+          'transform': """
+              translate(0, #{positions[0].y})
+            """
+        )
+
+        yLineItem = svg.select('.scrubberYLine')
+        ease(yLineItem).attr(
+          'transform': """
+              translate(#{positions[0].x + xOffSet}, 0)
+            """
+        )
 
 
       getScrubberPath: (w, yOffset, side, padding) ->

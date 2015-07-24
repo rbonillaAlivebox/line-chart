@@ -103,8 +103,8 @@
           item.selectAll('path').attr('fill', color)
 
         positions = this.preventOverlapping(positions)
-
         tickLength = Math.max(15, 100/columnWidth)
+        xOffSet = 0
 
         data.forEach (series, index) ->
           if options.series[index].visible is false
@@ -146,6 +146,21 @@
               translate(#{positions[index].x + series.xOffset}, #{positions[index].y})
             """
           )
+          xOffSet = series.xOffset
+
+        xLineItem = svg.select('.scrubberXLine')
+        ease(xLineItem).attr(
+          'transform': """
+              translate(0, #{positions[0].y})
+            """
+        )
+
+        yLineItem = svg.select('.scrubberYLine')
+        ease(yLineItem).attr(
+          'transform': """
+              translate(#{positions[0].x + xOffSet}, 0)
+            """
+        )
 
 
       getScrubberPath: (w, yOffset, side, padding) ->

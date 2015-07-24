@@ -86,10 +86,35 @@
       createGlass: (svg, dimensions, handlers, axes, data, options, dispatch, columnWidth) ->
         that = this
 
+        width = dimensions.width - dimensions.left - dimensions.right
+        height = dimensions.height - dimensions.top - dimensions.bottom
+
         glass = svg.append('g')
           .attr(
             'class': 'glass-container'
             'opacity': 0
+          )
+
+        glass.append('svg:line')
+          .attr(
+            'class': (s, i) -> "scrubberXLine"
+            'x1': 0
+            'x2': width
+            'y1': axes['y2Scale']
+            'y2': axes['y2Scale']
+            'stroke': 'green'
+            'stroke-width': '1px'
+          )
+
+        glass.append('svg:line')
+          .attr(
+            'class': (s, i) -> "scrubberYLine"
+            'x1': axes['xScale']
+            'x2': axes['xScale']
+            'y1': 0
+            'y2': height
+            'stroke': 'green'
+            'stroke-width': '1px'
           )
 
         scrubberGroup = glass.selectAll('.scrubberItem')
