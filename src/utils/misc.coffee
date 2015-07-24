@@ -200,6 +200,7 @@
               y: row[s.y]
               y0: 0
               axis: s.axis || 'y'
+              labelValue: row.labelValue || ''
               date: row.dateValue || 0
               close: row.closeValue || 0
               open: row.openValue || 0
