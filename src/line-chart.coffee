@@ -67,6 +67,18 @@ directive('linechart', ['n3utils', '$window', '$timeout', (n3utils, $window, $ti
         if options.drawDots
           _u.drawDots(svg, axes, dataPerSeries, options, handlers, dispatch)
 
+      syncObj = {
+        svg: svg
+        axes: axes
+        data: dataPerSeries
+        options: options
+        dispatch: dispatch
+        columnWidth: columnWidth
+        dimensions: dimensions
+
+      }
+      angular.element(element).on('tooltipSyncEvent', (event, dataEvent) -> _u.tooltipSyncHandler(syncObj, dataEvent))
+
       if options.drawLegend
         _u.drawLegend(svg, options.series, dimensions, handlers, dispatch)
 
@@ -76,6 +88,8 @@ directive('linechart', ['n3utils', '$window', '$timeout', (n3utils, $window, $ti
         _u.addTooltips(svg, dimensions, options.axes)
 
       _u.drawTriangles(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions)
+
+      _u.updateScrubber(svg, [1, 1], axes, dataPerSeries, options, dispatch, columnWidth, dimensions, true)
 
     updateEvents = ->
 

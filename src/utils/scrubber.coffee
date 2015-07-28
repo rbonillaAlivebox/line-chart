@@ -1,12 +1,12 @@
       showScrubber: (svg, glass, axes, data, options, dispatch, columnWidth, dimensions) ->
         that = this
         glass.on('mousemove', ->
-          svg.selectAll('.glass-container').attr('opacity', 1)
+          #svg.selectAll('.glass-container').attr('opacity', 1)
           that.updateScrubber(svg, d3.mouse(this), axes, data, options, dispatch, columnWidth, dimensions)
         )
         glass.on('mouseout', ->
           glass.on('mousemove', null)
-          svg.selectAll('.glass-container').attr('opacity', 0)
+          #svg.selectAll('.glass-container').attr('opacity', 0)
         )
 
       getClosestPoint: (values, xValue) ->
@@ -29,7 +29,10 @@
 
         return d
 
-      updateScrubber: (svg, [x, y], axes, data, options, dispatch, columnWidth, dimensions) ->
+      updateScrubber: (svg, [x, y], axes, data, options, dispatch, columnWidth, dimensions, isEvent) ->
+        if isEvent is null or isEvent is undefined
+          isEvent = false
+
         ease = (element) -> element.transition().duration(50)
         that = this
         positions = []
@@ -53,6 +56,13 @@
           serieData = series.values[position]
           if options.tooltip.formatter
             text = options.tooltip.formatter(v.x, v.y, options.series[index], serieData, index)
+
+          if series.tooltipSyncEvent and isEvent is false
+            dataEvent = {
+              points: [x, 0]
+              data: data
+            }
+            series.tooltipSyncEvent(dataEvent)
 
           if options.series[series.index].labelIsUpdatedWithTooltip
             that.updateTextLegendWithTooltip(svg, index, text)
@@ -246,3 +256,7 @@
         offset(getNeighbours('right'))
 
         return positions
+
+      tooltipSyncHandler: (syncObj, dataEvent) ->
+        this.updateScrubber(syncObj.svg, dataEvent.points, syncObj.axes, syncObj.data, syncObj.options,
+          syncObj.dispatch, syncObj.columnWidth, syncObj.dimensions, true)

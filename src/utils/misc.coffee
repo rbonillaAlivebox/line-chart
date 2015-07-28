@@ -92,7 +92,7 @@
         glass = svg.append('g')
           .attr(
             'class': 'glass-container'
-            'opacity': 0
+            'opacity': 1
           )
 
         glass.append('svg:line')
@@ -205,6 +205,7 @@
             type: s.type
             thickness: s.thickness
             drawDots: s.drawDots isnt false
+            tooltipSyncEvent: s.tooltipSyncEvent || null
 
 
           if s.dotSize?

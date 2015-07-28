@@ -1,5 +1,5 @@
 ###
-line-chart - v1.1.10 - 24 July 2015
+line-chart - v1.1.10 - 27 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
 ###
@@ -73,6 +73,18 @@ directive('linechart', ['n3utils', '$window', '$timeout', (n3utils, $window, $ti
         if options.drawDots
           _u.drawDots(svg, axes, dataPerSeries, options, handlers, dispatch)
 
+      syncObj = {
+        svg: svg
+        axes: axes
+        data: dataPerSeries
+        options: options
+        dispatch: dispatch
+        columnWidth: columnWidth
+        dimensions: dimensions
+
+      }
+      angular.element(element).on('tooltipSyncEvent', (event, dataEvent) -> _u.tooltipSyncHandler(syncObj, dataEvent))
+
       if options.drawLegend
         _u.drawLegend(svg, options.series, dimensions, handlers, dispatch)
 
@@ -82,6 +94,8 @@ directive('linechart', ['n3utils', '$window', '$timeout', (n3utils, $window, $ti
         _u.addTooltips(svg, dimensions, options.axes)
 
       _u.drawTriangles(svg, axes, dataPerSeries, columnWidth, options, handlers, dimensions)
+
+      _u.updateScrubber(svg, [1, 1], axes, dataPerSeries, options, dispatch, columnWidth, dimensions, true)
 
     updateEvents = ->
 
@@ -893,7 +907,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         glass = svg.append('g')
           .attr(
             'class': 'glass-container'
-            'opacity': 0
+            'opacity': 1
           )
 
         glass.append('svg:line')
@@ -1006,6 +1020,7 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
             type: s.type
             thickness: s.thickness
             drawDots: s.drawDots isnt false
+            tooltipSyncEvent: s.tooltipSyncEvent || null
 
 
           if s.dotSize?
@@ -1737,12 +1752,12 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
       showScrubber: (svg, glass, axes, data, options, dispatch, columnWidth, dimensions) ->
         that = this
         glass.on('mousemove', ->
-          svg.selectAll('.glass-container').attr('opacity', 1)
+          #svg.selectAll('.glass-container').attr('opacity', 1)
           that.updateScrubber(svg, d3.mouse(this), axes, data, options, dispatch, columnWidth, dimensions)
         )
         glass.on('mouseout', ->
           glass.on('mousemove', null)
-          svg.selectAll('.glass-container').attr('opacity', 0)
+          #svg.selectAll('.glass-container').attr('opacity', 0)
         )
 
       getClosestPoint: (values, xValue) ->
@@ -1765,7 +1780,10 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
 
         return d
 
-      updateScrubber: (svg, [x, y], axes, data, options, dispatch, columnWidth, dimensions) ->
+      updateScrubber: (svg, [x, y], axes, data, options, dispatch, columnWidth, dimensions, isEvent) ->
+        if isEvent is null or isEvent is undefined
+          isEvent = false
+
         ease = (element) -> element.transition().duration(50)
         that = this
         positions = []
@@ -1789,6 +1807,13 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           serieData = series.values[position]
           if options.tooltip.formatter
             text = options.tooltip.formatter(v.x, v.y, options.series[index], serieData, index)
+
+          if series.tooltipSyncEvent and isEvent is false
+            dataEvent = {
+              points: [x, 0]
+              data: data
+            }
+            series.tooltipSyncEvent(dataEvent)
 
           if options.series[series.index].labelIsUpdatedWithTooltip
             that.updateTextLegendWithTooltip(svg, index, text)
@@ -1982,6 +2007,10 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         offset(getNeighbours('right'))
 
         return positions
+
+      tooltipSyncHandler: (syncObj, dataEvent) ->
+        this.updateScrubber(syncObj.svg, dataEvent.points, syncObj.axes, syncObj.data, syncObj.options,
+          syncObj.dispatch, syncObj.columnWidth, syncObj.dimensions, true)
 
 # ----
 
