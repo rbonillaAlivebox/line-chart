@@ -158,6 +158,9 @@
           )
           xOffSet = series.xOffset
 
+        if positions is null or positions is undefined or positions[0] is null or positions[0] is undefined
+          return
+          
         xLineItem = svg.select('.scrubberXLine')
         ease(xLineItem).attr(
           'transform': """

@@ -1,5 +1,5 @@
 ###
-line-chart - v1.1.10 - 27 July 2015
+line-chart - v1.1.10 - 28 July 2015
 https://github.com/n3-charts/line-chart
 Copyright (c) 2015 n3-charts
 ###
@@ -651,6 +651,9 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
         # Translate every legend g node to its position
         translateLegends = () ->
           [left, right] = that.computeLegendLayout(svg, series, dimensions)
+          if left is null or left is undefined or right is null or right is undefined
+            return
+
           groups
             .attr(
               'transform': (s, i) ->
@@ -1909,6 +1912,9 @@ mod.factory('n3utils', ['$window', '$log', '$rootScope', ($window, $log, $rootSc
           )
           xOffSet = series.xOffset
 
+        if positions is null or positions is undefined or positions[0] is null or positions[0] is undefined
+          return
+          
         xLineItem = svg.select('.scrubberXLine')
         ease(xLineItem).attr(
           'transform': """

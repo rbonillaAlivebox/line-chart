@@ -132,6 +132,9 @@
         # Translate every legend g node to its position
         translateLegends = () ->
           [left, right] = that.computeLegendLayout(svg, series, dimensions)
+          if left is null or left is undefined or right is null or right is undefined
+            return
+
           groups
             .attr(
               'transform': (s, i) ->
